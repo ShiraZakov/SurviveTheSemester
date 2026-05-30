@@ -12,7 +12,23 @@ endif ()
 
 add_executable(SurviveTheSemester
         bagel.h
+        src/main.cpp
+        src/Game.cpp
+        src/Physics.cpp
+        src/EntityFactory.cpp
+        src/systems/input.cpp
+        src/systems/render.cpp
+        src/systems/ball_paddle.cpp
+        src/systems/drops.cpp
+        src/systems/progress.cpp
+        src/systems/hud.cpp
+        src/systems/exam.cpp
+        src/systems/hazards.cpp
+        src/systems/endgame.cpp
 )
+target_include_directories(SurviveTheSemester PRIVATE
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/src)
 
 set(SDL_STATIC ON)
 set(SDL_SHARED OFF)

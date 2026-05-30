@@ -1,0 +1,131 @@
+#include "Physics.h"
+#include "Components.h"
+#include "Events.h"
+#include "Config.h"
+
+#include <box2d/box2d.h>
+#include <cstdint>
+
+using bagel::Entity;
+using bagel::ent_type;
+using bagel::Mask;
+using bagel::MaskBuilder;
+using bagel::World;
+
+static b2WorldId g_world = b2_nullWorldId;
+
+void phys::init() {
+    b2WorldDef wd = b2DefaultWorldDef();
+    wd.gravity = {0.0f, 0.0f};
+    g_world = b2CreateWorld(&wd);
+}
+
+void phys::shutdown() {
+    if (B2_IS_NON_NULL(g_world)) {
+        b2DestroyWorld(g_world);
+        g_world = b2_nullWorldId;
+    }
+}
+
+b2WorldId phys::world() { return g_world; }
+
+ent_type phys::entityOf(b2BodyId b) {
+    int v = static_cast<int>(reinterpret_cast<intptr_t>(b2Body_GetUserData(b)));
+    return { v - 1 };   // userData stores id+1; 0 -> {-1} (no entity)
+}
+
+void phys::setVelocity(ent_type e, float vx, float vy) {
+    Entity en{e};
+    if (en.has<PhysicsBody>())
+        b2Body_SetLinearVelocity(en.get<PhysicsBody>().body, {vx, vy});
+}
+
+void phys::getVelocity(ent_type e, float& vx, float& vy) {
+    vx = vy = 0.0f;
+    Entity en{e};
+    if (en.has<PhysicsBody>()) {
+        b2Vec2 v = b2Body_GetLinearVelocity(en.get<PhysicsBody>().body);
+        vx = v.x; vy = v.y;
+    }
+}
+
+void phys::setPosition(ent_type e, float x, float y) {
+    Entity en{e};
+    if (en.has<PhysicsBody>())
+        b2Body_SetTransform(en.get<PhysicsBody>().body, {x, y}, b2Rot_identity);
+}
+
+void physicsStepSystem(float dt) {
+    b2World_Step(g_world, dt, Config::SUBSTEPS);
+
+    // Box2D is the source of truth: copy body transforms into Position.
+    {
+        static const Mask mask = MaskBuilder()
+            .set<PhysicsBody>()
+            .set<Position>()
+            .build();
+        static int q = World::createQuery(mask);
+        for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+            b2Vec2 p = b2Body_GetPosition(e.get<PhysicsBody>().body);
+            e.get<Position>() = {p.x, p.y};
+        }
+    }
+
+    // Keep the ball at a constant speed so it never stalls or runs away.
+    {
+        static const Mask mask = MaskBuilder()
+            .set<BallTag>()
+            .set<PhysicsBody>()
+            .build();
+        static int q = World::createQuery(mask);
+        for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+            b2BodyId b = e.get<PhysicsBody>().body;
+            b2Vec2 v = b2Body_GetLinearVelocity(b);
+            float len = b2Length(v);
+            if (len > 0.01f) {
+                float s = Config::BALL_SPEED / len;
+                b2Body_SetLinearVelocity(b, {v.x * s, v.y * s});
+            }
+        }
+    }
+}
+
+static void onContactPair(ent_type a, ent_type b) {
+    if (a.id < 0 || b.id < 0) return;
+    Entity ea{a}, eb{b};
+
+    Entity ball{a}, other{b};
+    if      (ea.has<BallTag>()) { ball = ea; other = eb; }
+    else if (eb.has<BallTag>()) { ball = eb; other = ea; }
+    else return;   // only ball-driven contacts produce gameplay events
+
+    if (other.has<BrickTag>() && other.has<BrickInfo>())
+        ev::courseHit(other.get<BrickInfo>().courseId, other.entity());
+    else if (other.has<HazardTag>() && other.has<HazardInfo>())
+        ev::hazardTriggered(other.get<HazardInfo>().courseId, other.get<HazardInfo>().type);
+}
+
+static void onSensorPair(ent_type sensor, ent_type visitor) {
+    if (sensor.id < 0 || visitor.id < 0) return;
+    Entity s{sensor}, v{visitor};
+    if (s.has<DropTag>() && s.has<DropInfo>() && !s.has<DeadTag>() && v.has<PaddleTag>()) {
+        ev::dropCaught(s.get<DropInfo>().courseId, s.get<DropInfo>().type);
+        s.add(DeadTag{});   // caught: schedule removal
+    }
+}
+
+void contactEventSystem() {
+    b2ContactEvents ce = b2World_GetContactEvents(g_world);
+    for (int i = 0; i < ce.beginCount; ++i) {
+        ent_type a = phys::entityOf(b2Shape_GetBody(ce.beginEvents[i].shapeIdA));
+        ent_type b = phys::entityOf(b2Shape_GetBody(ce.beginEvents[i].shapeIdB));
+        onContactPair(a, b);
+    }
+
+    b2SensorEvents se = b2World_GetSensorEvents(g_world);
+    for (int i = 0; i < se.beginCount; ++i) {
+        ent_type sensor  = phys::entityOf(b2Shape_GetBody(se.beginEvents[i].sensorShapeId));
+        ent_type visitor = phys::entityOf(b2Shape_GetBody(se.beginEvents[i].visitorShapeId));
+        onSensorPair(sensor, visitor);
+    }
+}

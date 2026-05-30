@@ -1,0 +1,47 @@
+#pragma once
+// Event entities = the cross-system "hooks"
+//
+// An event is a short-lived entity carrying ONE event component + EventTag.
+// Producers call the ev::* helpers below. Consumers iterate via a Mask query
+// (MaskBuilder().set<EventT>().build() + World::createQuery).
+// The core deletes ALL event entities at end-of-frame (eventCleanupSystem), so
+// every event lives exactly one frame and may have multiple consumers.
+
+#include "bagel.h"
+#include "Components.h"
+
+// ---- Event components ----
+struct CourseHit     { int courseId; bagel::ent_type brick; };      // onCourseHit
+struct DropCaught    { int courseId; DropType type; };              // onDropCaught
+struct ExamStarted   { int courseId; };                             // startExam
+struct ExamFinished  { int courseId; bool passed; float grade; };   // finishExam
+struct HazardTriggered { int courseId; HazardType type; };
+struct LifeLost      { int amount; };
+
+struct EventTag {};   // marks every event entity for end-of-frame cleanup
+
+namespace bagel {
+    template<> struct Storage<EventTag> final : NoInstance { using type = TaggedStorage<EventTag>; };
+}
+
+// ---- Producer hooks (the only sanctioned way to raise an event) ----
+namespace ev {
+    inline void courseHit(int courseId, bagel::ent_type brick) {
+        bagel::Entity::create().addAll(CourseHit{courseId, brick}, EventTag{});
+    }
+    inline void dropCaught(int courseId, DropType type) {
+        bagel::Entity::create().addAll(DropCaught{courseId, type}, EventTag{});
+    }
+    inline void examStarted(int courseId) {
+        bagel::Entity::create().addAll(ExamStarted{courseId}, EventTag{});
+    }
+    inline void examFinished(int courseId, bool passed, float grade) {
+        bagel::Entity::create().addAll(ExamFinished{courseId, passed, grade}, EventTag{});
+    }
+    inline void hazardTriggered(int courseId, HazardType type) {
+        bagel::Entity::create().addAll(HazardTriggered{courseId, type}, EventTag{});
+    }
+    inline void lifeLost(int amount) {
+        bagel::Entity::create().addAll(LifeLost{amount}, EventTag{});
+    }
+}
