@@ -12,6 +12,7 @@
 
 // ---- Event components ----
 struct CourseHit     { int courseId; bagel::ent_type brick; };      // onCourseHit
+struct PaddleHit     { bagel::ent_type ball; bagel::ent_type paddle; };
 struct DropCaught    { int courseId; DropType type; };              // onDropCaught
 struct ExamStarted   { int courseId; };                             // startExam
 struct ExamFinished  { int courseId; bool passed; float grade; };   // finishExam
@@ -28,6 +29,9 @@ namespace bagel {
 namespace ev {
     inline void courseHit(int courseId, bagel::ent_type brick) {
         bagel::Entity::create().addAll(CourseHit{courseId, brick}, EventTag{});
+    }
+    inline void paddleHit(bagel::ent_type ball, bagel::ent_type paddle) {
+        bagel::Entity::create().addAll(PaddleHit{ball, paddle}, EventTag{});
     }
     inline void dropCaught(int courseId, DropType type) {
         bagel::Entity::create().addAll(DropCaught{courseId, type}, EventTag{});

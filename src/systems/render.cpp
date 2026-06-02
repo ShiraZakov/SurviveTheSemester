@@ -30,13 +30,16 @@ void renderSystem(SDL_Renderer* r) {
         const auto& p = e.get<Position>();
         const auto& s = e.get<Size>();
         const auto& d = e.get<Drawable>();
+        float drawY = p.y;
+        if (e.has<PaddleImpact>())
+            drawY += 0.14f * (e.get<PaddleImpact>().time / 0.10f);
         SDL_SetRenderDrawColorFloat(r, d.r, d.g, d.b, d.a);
         if (d.shape == Shape::Circle) {
-            fillCircle(r, p.x * Config::PPM, p.y * Config::PPM, (s.w * 0.5f) * Config::PPM);
+            fillCircle(r, p.x * Config::PPM, drawY * Config::PPM, (s.w * 0.5f) * Config::PPM);
         } else {
             SDL_FRect rect{
                 (p.x - s.w * 0.5f) * Config::PPM,
-                (p.y - s.h * 0.5f) * Config::PPM,
+                (drawY - s.h * 0.5f) * Config::PPM,
                 s.w * Config::PPM, s.h * Config::PPM};
             SDL_RenderFillRect(r, &rect);
         }

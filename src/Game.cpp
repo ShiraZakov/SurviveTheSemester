@@ -88,8 +88,7 @@ void SurviveGame::setupScene() {
         }
 
     spawnPaddle(W * 0.5f, Config::PADDLE_Y);
-    Entity ball = spawnBall(W * 0.5f, H * 0.55f);
-    phys::setVelocity(ball.entity(), Config::BALL_SPEED * 0.55f, -Config::BALL_SPEED * 0.83f);
+    spawnBall(W * 0.5f, Config::PADDLE_Y - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.05f);
 }
 
 bool SurviveGame::init(SDL_Renderer* renderer) {
@@ -130,7 +129,7 @@ void SurviveGame::onKeyDown(int sc) {
 void SurviveGame::tick(const bool* keys, float dt) {
     GameState& gs = gameState();
     if (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM) {
-        inputSystem(keys, dt);
+        inputSystem(keys, dt, _renderer);
         physicsStepSystem(dt);
         contactEventSystem();
         courseHitSystem();

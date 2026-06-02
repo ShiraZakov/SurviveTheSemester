@@ -6,7 +6,7 @@
 
 struct SDL_Renderer;
 
-void inputSystem(const bool* keys, float dt);  // AVIEL
+void inputSystem(const bool* keys, float dt, SDL_Renderer* r);  // AVIEL
 void courseHitSystem();                        // AVIEL  (consumes CourseHit)
 void renderSystem(SDL_Renderer* r);            // AVIEL
 

@@ -19,6 +19,7 @@ struct BrickInfo  { int courseId; };                               // brick -> c
 struct DropInfo   { int courseId; DropType type; };                // falling pickup: source course + kind of drop
 struct HazardInfo { int courseId; HazardType type; };              // hazard: source course + kind of hazard
 struct ProjInfo   { int courseId; };                               // exam projectile -> course that fired it
+struct PaddleImpact { float time; };                               // remaining visual bounce time after ball contact
 
 // on the singleton entity only
 struct GameState {
