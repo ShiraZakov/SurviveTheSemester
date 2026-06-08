@@ -4,12 +4,14 @@
 #include "Config.h"
 #include "EntityFactory.h"
 #include "Physics.h"
+#include "Sprites.h"
 #include "systems/systems.h"
 
 #include <SDL3/SDL.h>
 #include <box2d/box2d.h>
 #include <vector>
 #include <cstdio>
+#include <cstring>
 
 using bagel::Entity;
 using bagel::ent_type;
@@ -79,20 +81,25 @@ void SurviveGame::setupScene() {
     for (int c = 0; c < Config::COURSES; ++c) spawnCourse(c);
 
     const float bw = Config::BRICK_W, bh = Config::BRICK_H, gap = Config::BRICK_GAP;
-    const float startX = 1.5f, startY = 1.6f;
+    const float gridW = Config::brickGridWidth();
+    const float startX = (W - gridW) * 0.5f + bw * 0.5f;
+    const float startY = 2.4f;
     for (int row = 0; row < Config::COURSES; ++row)
         for (int col = 0; col < Config::BRICK_COLS; ++col) {
             float x = startX + col * (bw + gap);
-            float y = startY + row * (bh + gap + 0.25f);
-            spawnBrick(row, x, y);
+            float y = startY + row * (bh + gap * 0.5f);
+            const int courseIndex = Config::gridCourseIndex(row, col);
+            spawnBrick(row, courseIndex, x, y);
         }
 
-    spawnPaddle(W * 0.5f, Config::PADDLE_Y);
-    spawnBall(W * 0.5f, Config::PADDLE_Y - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.05f);
+    const float paddleY = Config::paddleY();
+    spawnPaddle(W * 0.5f, paddleY);
+    spawnBall(W * 0.5f, paddleY - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.04f);
 }
 
 bool SurviveGame::init(SDL_Renderer* renderer) {
     _renderer = renderer;
+    if (!sprites::init(renderer)) return false;
     phys::init();
     setupScene();
     return true;
@@ -101,24 +108,37 @@ bool SurviveGame::init(SDL_Renderer* renderer) {
 void SurviveGame::shutdown() {
     clearAll();
     phys::shutdown();
+    sprites::shutdown();
+}
+
+static void launchBallAndStart() {
+    GameState& gs = gameState();
+    static const Mask mask = MaskBuilder().set<BallTag>().build();
+    static int q = World::createQuery(mask);
+    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+        float vx, vy; phys::getVelocity(e.entity(), vx, vy);
+        if (vx * vx + vy * vy < 1.0f) {
+            phys::setVelocity(e.entity(), Config::BALL_SPEED * 0.55f, -Config::BALL_SPEED * 0.83f);
+            gs.started = true;
+        }
+    }
 }
 
 void SurviveGame::onKeyDown(int sc) {
     switch (sc) {
         // Debug-hotkey synthesizer: lets each vertical be exercised solo.
         case SDL_SCANCODE_H: ev::courseHit(0, {-1});                 break;
-        case SDL_SCANCODE_J: ev::dropCaught(0, DropType::Assignment); break;
+        case SDL_SCANCODE_J: ev::dropCaught(0, 0, DropType::Assignment, {-1}); break;
         case SDL_SCANCODE_E: ev::examStarted(0);                     break;
         case SDL_SCANCODE_K: ev::hazardTriggered(0, HazardType::LoseLife); break;
         case SDL_SCANCODE_L: ev::lifeLost(1);                        break;
         case SDL_SCANCODE_SPACE: {
-            static const Mask mask = MaskBuilder().set<BallTag>().build();
-            static int q = World::createQuery(mask);
-            for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-                float vx, vy; phys::getVelocity(e.entity(), vx, vy);
-                if (vx * vx + vy * vy < 1.0f)
-                    phys::setVelocity(e.entity(), Config::BALL_SPEED * 0.55f, -Config::BALL_SPEED * 0.83f);
+            GameState& gs = gameState();
+            if (gs.phase == Phase::LOST || gs.phase == Phase::WON) {
+                clearAll();
+                setupScene();
             }
+            launchBallAndStart();
             break;
         }
         case SDL_SCANCODE_R: clearAll(); setupScene(); break;
@@ -132,11 +152,15 @@ void SurviveGame::tick(const bool* keys, float dt) {
         inputSystem(keys, dt, _renderer);
         physicsStepSystem(dt);
         contactEventSystem();
+        brickMeterSystem();
+        brickClearDelaySystem(dt);
         courseHitSystem();
         dropSystem(dt);
+        brickUnlockSystem();
         courseProgressSystem();
         examSystem(dt);
         hazardSystem();
+        yearSystem(dt);
         gameStateSystem();
         eventCleanupSystem();
         deadCleanupSystem();
@@ -162,10 +186,35 @@ void SurviveGame::debugOverlay() {
     SDL_RenderDebugText(_renderer, 8.0f, Config::WINDOW_H - 28.0f, buf);
     SDL_RenderDebugText(_renderer, 8.0f, Config::WINDOW_H - 16.0f,
                         "A/D move  Space launch  H/J/E/K/L debug events  R restart  Esc quit");
+
+    char row2[64] = "row2:";
+    int finals = 0;
+    {
+        static const Mask mask = MaskBuilder()
+            .set<BrickTag>()
+            .set<BrickInfo>()
+            .set<Position>()
+            .build();
+        static int q = World::createQuery(mask);
+        for (Entity b = World::first(q); !World::eof(q); b = World::next(q)) {
+            if (b.has<DeadTag>()) continue;
+            const int ci = b.get<BrickInfo>().courseIndex;
+            if (ci == sprites::FINAL_COURSE_INDEX) ++finals;
+            if (b.get<Position>().y < 4.5f) continue;
+            char tmp[8];
+            std::snprintf(tmp, sizeof tmp, " %d", ci);
+            if (std::strlen(row2) + std::strlen(tmp) + 1 < sizeof row2)
+                std::strcat(row2, tmp);
+        }
+    }
+    char fin[32];
+    std::snprintf(fin, sizeof fin, "  finals:%d", finals);
+    std::strncat(row2, fin, sizeof row2 - std::strlen(row2) - 1);
+    SDL_RenderDebugText(_renderer, 8.0f, Config::WINDOW_H - 44.0f, row2);
 }
 
 void SurviveGame::draw() {
-    SDL_SetRenderDrawColor(_renderer, 18, 18, 26, 255);
+    SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
     SDL_RenderClear(_renderer);
     renderSystem(_renderer);
     hudSystem(_renderer);

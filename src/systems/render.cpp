@@ -3,6 +3,7 @@
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"
+#include "Sprites.h"
 #include <SDL3/SDL.h>
 
 using bagel::Entity;
@@ -10,12 +11,59 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+static SDL_FRect spriteDest(Entity e, float worldX, float drawY, float worldW, float worldH,
+                            const SpritePart& sp) {
+    const float boxW = worldW * Config::PPM;
+    const float boxH = worldH * Config::PPM;
+    const float cx = worldX * Config::PPM;
+    const float aspect = sp.part.h / sp.part.w;
+
+    float drawW = boxW;
+    float drawH = drawW * aspect;
+
+    if (e.has<PaddleTag>()) {
+        const float bottom = (drawY + worldH * 0.5f) * Config::PPM;
+        return {cx - drawW * 0.5f, bottom - drawH, drawW, drawH};
+    }
+
+    if (drawH > boxH) {
+        drawH = boxH;
+        drawW = drawH / aspect;
+    }
+    const float top = (drawY - worldH * 0.5f) * Config::PPM + (boxH - drawH) * 0.5f;
+    return {cx - drawW * 0.5f, top, drawW, drawH};
+}
+
 static void fillCircle(SDL_Renderer* r, float cx, float cy, float rad) {
     for (int dy = -(int)rad; dy <= (int)rad; ++dy) {
         float dx = SDL_sqrtf(rad * rad - (float)dy * (float)dy);
         SDL_FRect line{cx - dx, cy + (float)dy, 2.0f * dx, 1.0f};
         SDL_RenderFillRect(r, &line);
     }
+}
+
+static void drawTaxDrop(SDL_Renderer* r, float cx, float cy, float half) {
+    const float outer = half * 1.12f;
+    SDL_FRect glow{cx - outer, cy - outer, outer * 2.0f, outer * 2.0f};
+    SDL_SetRenderDrawColorFloat(r, 1.0f, 0.95f, 0.25f, 0.35f);
+    SDL_RenderFillRect(r, &glow);
+
+    SDL_FRect body{cx - half, cy - half, half * 2.0f, half * 2.0f};
+    SDL_SetRenderDrawColorFloat(r, 1.0f, 0.78f, 0.05f, 1.0f);
+    SDL_RenderFillRect(r, &body);
+    SDL_SetRenderDrawColorFloat(r, 1.0f, 1.0f, 1.0f, 1.0f);
+    SDL_RenderRect(r, &body);
+
+    const float inset = half * 0.28f;
+    SDL_FRect core{body.x + inset, body.y + inset, body.w - inset * 2.0f, body.h - inset * 2.0f};
+    SDL_SetRenderDrawColorFloat(r, 1.0f, 0.92f, 0.35f, 1.0f);
+    SDL_RenderFillRect(r, &core);
+
+    const float barW = half * 0.55f;
+    const float barH = half * 0.16f;
+    SDL_FRect bar{cx - barW * 0.5f, cy - barH * 0.5f, barW, barH};
+    SDL_SetRenderDrawColorFloat(r, 0.15f, 0.08f, 0.0f, 1.0f);
+    SDL_RenderFillRect(r, &bar);
 }
 
 void renderSystem(SDL_Renderer* r) {
@@ -33,6 +81,34 @@ void renderSystem(SDL_Renderer* r) {
         float drawY = p.y;
         if (e.has<PaddleImpact>())
             drawY += 0.14f * (e.get<PaddleImpact>().time / 0.10f);
+
+        if (e.has<DropTag>() && e.has<DropInfo>() && e.get<DropInfo>().type == DropType::Tax) {
+            const float half = (s.w * 0.5f) * Config::PPM;
+            drawTaxDrop(r, p.x * Config::PPM, drawY * Config::PPM, half);
+            continue;
+        }
+
+        if (e.has<SpritePart>()) {
+            if (!sprites::ready()) continue;
+            SpritePart sp = e.get<SpritePart>();
+            if (e.has<BrickTag>() && e.has<BrickInfo>() && e.has<BrickProgress>())
+                sp = brickSpritePart(e);
+            const SDL_FRect dest = spriteDest(e, p.x, drawY, s.w, s.h, sp);
+            sprites::drawPart(r, sp, dest);
+            if (e.has<BrickProgress>()) {
+                const auto& prog = e.get<BrickProgress>();
+                if (!prog.unlocked) continue;
+                const float mw = s.w * Config::PPM * 0.55f;
+                const float mh = prog.max == 5 ? 10.0f : 12.0f;
+                const float mx = (p.x * Config::PPM) - mw * 0.5f;
+                const float my = (drawY + s.h * 0.5f) * Config::PPM - mh - 4.0f;
+                if (prog.max == 5)
+                    sprites::drawMeter5(r, prog.filled, prog.max, mx, my, mw, mh);
+                else
+                    sprites::drawMeter3(r, prog.filled, prog.max, mx, my, mw, mh);
+            }
+            continue;
+        }
         SDL_SetRenderDrawColorFloat(r, d.r, d.g, d.b, d.a);
         if (d.shape == Shape::Circle) {
             fillCircle(r, p.x * Config::PPM, drawY * Config::PPM, (s.w * 0.5f) * Config::PPM);

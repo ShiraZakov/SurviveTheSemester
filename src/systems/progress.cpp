@@ -27,15 +27,9 @@ void courseProgressSystem() {
     // 0.14 * 8 bricks per row > 1.0, so clearing a course's bricks completes it
     // (drives the end-to-end demo). MAY: retune once real drops/weights exist.
     {
-        static const Mask mask = MaskBuilder().set<CourseHit>().build();
+        static const Mask mask = MaskBuilder().set<BrickCleared>().build();
         static int q = World::createQuery(mask);
         for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
-            bump(e.get<CourseHit>().courseId, 0.14f);
-    }
-    {
-        static const Mask mask = MaskBuilder().set<DropCaught>().build();
-        static int q = World::createQuery(mask);
-        for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
-            bump(e.get<DropCaught>().courseId, 0.10f);
+            bump(e.get<BrickCleared>().courseId, 0.14f);
     }
 }

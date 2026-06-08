@@ -2,6 +2,7 @@
 #include "Components.h"
 #include "Config.h"
 #include "Physics.h"
+#include "Sprites.h"
 
 #include <box2d/box2d.h>
 #include <cstdint>
@@ -45,7 +46,8 @@ Entity spawnPaddle(float x, float y) {
     b2BodyId body = makeBody(e.entity(), b2_kinematicBody, x, y);
     addBox(body, Config::PADDLE_W, Config::PADDLE_H, false, true, true);  // sensorEv: catches drops
     e.addAll(Position{x, y}, Size{Config::PADDLE_W, Config::PADDLE_H},
-             Drawable{0.85f, 0.85f, 0.90f, 1.0f, Shape::Rect}, PhysicsBody{body}, PaddleTag{});
+             Drawable{0.85f, 0.85f, 0.90f, 1.0f, Shape::Rect},
+             sprites::makePart(sprites::Id::PADDLE_MTA), PhysicsBody{body}, PaddleTag{});
     return e;
 }
 
@@ -55,7 +57,8 @@ Entity spawnBall(float x, float y) {
     addCircle(body, Config::BALL_RADIUS, true, false);
     float d = Config::BALL_RADIUS * 2.0f;
     e.addAll(Position{x, y}, Size{d, d},
-             Drawable{1.0f, 0.95f, 0.40f, 1.0f, Shape::Circle}, PhysicsBody{body}, BallTag{});
+             Drawable{1.0f, 0.95f, 0.40f, 1.0f, Shape::Circle},
+             sprites::makePart(sprites::Id::BALL_DEFAULT), PhysicsBody{body}, BallTag{});
     return e;
 }
 
@@ -68,24 +71,49 @@ Entity spawnWall(float x, float y, float w, float h) {
     return e;
 }
 
-Entity spawnBrick(int courseId, float x, float y) {
+Entity spawnBrick(int courseId, int spriteIndex, float x, float y) {
+    const int ci = sprites::courseIndexFromSprite(spriteIndex);
+    const int meterMax = sprites::courseMeterMax(ci);
+    const bool unlocked = sprites::courseStartsUnlocked(ci);
+    const bool showLocked = sprites::courseShowsLockedSprite(ci, unlocked);
+
     Entity e = Entity::create();
     b2BodyId body = makeBody(e.entity(), b2_staticBody, x, y);
     addBox(body, Config::BRICK_W, Config::BRICK_H, false, true, false);  // contactEv: ball-brick reported
     float r, g, b; Config::courseColor(courseId, r, g, b);
     e.addAll(Position{x, y}, Size{Config::BRICK_W, Config::BRICK_H},
-             Drawable{r, g, b, 1.0f, Shape::Rect}, PhysicsBody{body}, BrickInfo{courseId}, BrickTag{});
+             Drawable{r, g, b, 1.0f, Shape::Rect},
+             sprites::makePart(sprites::courseSpriteId(ci, showLocked)),
+             BrickProgress{0, meterMax, unlocked, 0.0f},
+             BrickPrereqMask{sprites::coursePrereqMask(ci)},
+             PhysicsBody{body}, BrickInfo{courseId, ci}, BrickTag{});
     return e;
 }
 
-Entity spawnDrop(int courseId, float x, float y, DropType type) {
+Entity spawnDrop(int courseId, int courseIndex, float x, float y, DropType type,
+                 ent_type sourceBrick, float gradeValue) {
     Entity e = Entity::create();
+    const float size = type == DropType::Tax ? Config::TAX_DROP_SIZE : Config::DROP_SIZE;
     b2BodyId body = makeBody(e.entity(), b2_kinematicBody, x, y);
-    addBox(body, Config::DROP_SIZE, Config::DROP_SIZE, true, false, true);  // sensor
+    addBox(body, size, size, true, false, true);  // sensor
     b2Body_SetLinearVelocity(body, {0.0f, Config::DROP_FALL});
+
+    if (type == DropType::Tax) {
+        e.addAll(Position{x, y}, Size{size, size},
+                 Drawable{1.0f, 0.82f, 0.05f, 1.0f, Shape::Rect},
+                 PhysicsBody{body},
+                 DropInfo{courseId, courseIndex, type, sourceBrick, gradeValue},
+                 DropTag{});
+        return e;
+    }
+
     float r, g, b; Config::courseColor(courseId, r, g, b);
-    e.addAll(Position{x, y}, Size{Config::DROP_SIZE, Config::DROP_SIZE},
-             Drawable{r, g, b, 0.90f, Shape::Rect}, PhysicsBody{body}, DropInfo{courseId, type}, DropTag{});
+    e.addAll(Position{x, y}, Size{size, size},
+             Drawable{r, g, b, 0.90f, Shape::Rect},
+             sprites::makePart(sprites::Id::ASSIGNMENT_GREEN),
+             PhysicsBody{body},
+             DropInfo{courseId, courseIndex, type, sourceBrick, gradeValue},
+             DropTag{});
     return e;
 }
 
@@ -116,7 +144,10 @@ Entity spawnCourse(int id) {
 
 Entity spawnGameState() {
     Entity e = Entity::create();
-    e.addAll(GameState{Config::START_LIVES, 0.0f, Phase::PLAYING, -1, 0, Config::COURSES, 0.0f},
-             GameStateTag{});
+    GameState gs{
+        Config::START_LIVES, Config::START_AVERAGE, Phase::PLAYING, -1, 0, Config::COURSES,
+        {}, 1, 0.0f, 0.0f, false, false};
+    gs.taxOutcome.fill(GameState::TAX_PENDING);
+    e.addAll(gs, GameStateTag{});
     return e;
 }

@@ -16,15 +16,18 @@ add_executable(SurviveTheSemester
         src/Game.cpp
         src/Physics.cpp
         src/EntityFactory.cpp
+        src/Sprites.cpp
         src/systems/input.cpp
         src/systems/render.cpp
         src/systems/ball_paddle.cpp
+        src/systems/brick_progress.cpp
         src/systems/drops.cpp
         src/systems/progress.cpp
         src/systems/hud.cpp
         src/systems/exam.cpp
         src/systems/hazards.cpp
         src/systems/endgame.cpp
+        src/systems/year.cpp
 )
 target_include_directories(SurviveTheSemester PRIVATE
         ${PROJECT_SOURCE_DIR}
@@ -58,3 +61,18 @@ add_custom_command(TARGET SurviveTheSemester POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different
         "${PROJECT_SOURCE_DIR}/res"
         "$<TARGET_FILE_DIR:SurviveTheSemester>/res")
+
+add_executable(brick_prereq_tests
+        tests/test_brick_prereqs.cpp
+        src/Sprites.cpp
+        src/systems/brick_progress.cpp
+        src/EntityFactory.cpp
+        src/Physics.cpp
+)
+target_include_directories(brick_prereq_tests PRIVATE
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(brick_prereq_tests PRIVATE SDL3-static SDL3_image-static box2d)
+
+enable_testing()
+add_test(NAME brick_prereq_tests COMMAND brick_prereq_tests)

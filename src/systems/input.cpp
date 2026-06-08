@@ -74,7 +74,7 @@ void inputSystem(const bool* keys, float dt, SDL_Renderer* r) {
     if (World::eof(paddleQuery)) return;
 
     const auto& paddlePos = paddle.get<Position>();
-    const float parkedY = Config::PADDLE_Y - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.05f;
+    const float parkedY = Config::paddleY() - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.04f;
 
     for (Entity ball = World::first(ballQuery); !World::eof(ballQuery); ball = World::next(ballQuery)) {
         float vx = 0.0f, vy = 0.0f;

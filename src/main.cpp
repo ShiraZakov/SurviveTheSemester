@@ -24,7 +24,13 @@ int main() {
     }
 
     SurviveGame game;
-    game.init(renderer);
+    if (!game.init(renderer)) {
+        SDL_Log("Game init failed: %s", SDL_GetError());
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
 
     bool running = true;
     Uint64 prev = SDL_GetTicks();

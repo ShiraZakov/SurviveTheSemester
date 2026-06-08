@@ -13,11 +13,13 @@
 // ---- Event components ----
 struct CourseHit     { int courseId; bagel::ent_type brick; };      // onCourseHit
 struct PaddleHit     { bagel::ent_type ball; bagel::ent_type paddle; };
-struct DropCaught    { int courseId; DropType type; };              // onDropCaught
+struct DropCaught    { int courseId; int courseIndex; DropType type; bagel::ent_type brick; float grade; };
+struct BrickCleared  { int courseId; int courseIndex; };
 struct ExamStarted   { int courseId; };                             // startExam
 struct ExamFinished  { int courseId; bool passed; float grade; };   // finishExam
 struct HazardTriggered { int courseId; HazardType type; };
 struct LifeLost      { int amount; };
+struct TaxMissed     { int courseIndex; };
 
 struct EventTag {};   // marks every event entity for end-of-frame cleanup
 
@@ -33,8 +35,12 @@ namespace ev {
     inline void paddleHit(bagel::ent_type ball, bagel::ent_type paddle) {
         bagel::Entity::create().addAll(PaddleHit{ball, paddle}, EventTag{});
     }
-    inline void dropCaught(int courseId, DropType type) {
-        bagel::Entity::create().addAll(DropCaught{courseId, type}, EventTag{});
+    inline void dropCaught(int courseId, int courseIndex, DropType type,
+                           bagel::ent_type brick, float grade = 0.0f) {
+        bagel::Entity::create().addAll(DropCaught{courseId, courseIndex, type, brick, grade}, EventTag{});
+    }
+    inline void brickCleared(int courseId, int courseIndex) {
+        bagel::Entity::create().addAll(BrickCleared{courseId, courseIndex}, EventTag{});
     }
     inline void examStarted(int courseId) {
         bagel::Entity::create().addAll(ExamStarted{courseId}, EventTag{});
@@ -47,5 +53,8 @@ namespace ev {
     }
     inline void lifeLost(int amount) {
         bagel::Entity::create().addAll(LifeLost{amount}, EventTag{});
+    }
+    inline void taxMissed(int courseIndex) {
+        bagel::Entity::create().addAll(TaxMissed{courseIndex}, EventTag{});
     }
 }

@@ -23,7 +23,7 @@ static void resetBall(Entity ball) {
     float x = Config::WORLD_W * 0.5f;
     if (!World::eof(paddleQuery)) x = paddle.get<Position>().x;
 
-    const float y = Config::PADDLE_Y - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.05f;
+    const float y = Config::paddleY() - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.04f;
     phys::setVelocity(ball.entity(), 0.0f, 0.0f);
     phys::setPosition(ball.entity(), x, y);
     ball.get<Position>() = {x, y};
@@ -110,17 +110,6 @@ static void paddleHitSystem() {
 }
 
 void courseHitSystem() {
-    static const Mask mask = MaskBuilder().set<CourseHit>().build();
-    static int q = World::createQuery(mask);
-
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-        auto brick = e.get<CourseHit>().brick;
-        if (brick.id < 0) continue;               // synthetic/debug hit, no brick
-        Entity b(brick);
-        if (b.has<BrickTag>() && !b.has<DeadTag>())
-            b.add(DeadTag{});
-    }
-
     paddleHitSystem();
     ballLossSystem();
 }

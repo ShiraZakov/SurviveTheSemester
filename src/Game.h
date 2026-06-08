@@ -3,6 +3,7 @@
 
 #include "bagel.h"
 #include "Components.h"
+#include <algorithm>
 
 struct SDL_Renderer;
 
@@ -10,6 +11,13 @@ struct SDL_Renderer;
 bagel::ent_type gameStateEntity();
 GameState&      gameState();
 bagel::ent_type courseEntity(int id);   // returns {-1} if no course with that id
+
+inline int countCaughtTax(const GameState& gs) {
+    int caught = 0;
+    for (int8_t outcome : gs.taxOutcome)
+        if (outcome == GameState::TAX_CAUGHT) ++caught;
+    return caught;
+}
 
 // Core cleanup systems (owned by SHIRA, run at end of each frame).
 void eventCleanupSystem();   // deletes all event entities

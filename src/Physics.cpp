@@ -2,6 +2,7 @@
 #include "Components.h"
 #include "Events.h"
 #include "Config.h"
+#include "systems/systems.h"
 
 #include <box2d/box2d.h>
 #include <cmath>
@@ -119,8 +120,10 @@ static void onContactPair(ent_type a, ent_type b) {
     else if (eb.has<BallTag>()) { ball = eb; other = ea; }
     else return;   // only ball-driven contacts produce gameplay events
 
-    if (other.has<BrickTag>() && other.has<BrickInfo>())
+    if (other.has<BrickTag>() && other.has<BrickInfo>()) {
+        if (!brickIsPlayable(other)) return;
         ev::courseHit(other.get<BrickInfo>().courseId, other.entity());
+    }
     else if (other.has<PaddleTag>())
         ev::paddleHit(ball.entity(), other.entity());
     else if (other.has<HazardTag>() && other.has<HazardInfo>())
@@ -131,7 +134,8 @@ static void onSensorPair(ent_type sensor, ent_type visitor) {
     if (sensor.id < 0 || visitor.id < 0) return;
     Entity s{sensor}, v{visitor};
     if (s.has<DropTag>() && s.has<DropInfo>() && !s.has<DeadTag>() && v.has<PaddleTag>()) {
-        ev::dropCaught(s.get<DropInfo>().courseId, s.get<DropInfo>().type);
+        const auto& drop = s.get<DropInfo>();
+        ev::dropCaught(drop.courseId, drop.courseIndex, drop.type, drop.sourceBrick, drop.gradeValue);
         s.add(DeadTag{});   // caught: schedule removal
     }
 }
