@@ -29,11 +29,12 @@ static void addBox(b2BodyId body, float w, float h, bool sensor, bool contactEv,
     b2CreatePolygonShape(body, &sd, &box);
 }
 
-static void addCircle(b2BodyId body, float radius, bool contactEv, bool sensorEv) {
+static void addCircle(b2BodyId body, float radius, bool sensor, bool contactEv, bool sensorEv) {
     b2ShapeDef sd = b2DefaultShapeDef();
     sd.density = 1.0f;
     sd.material.friction = 0.0f;
     sd.material.restitution = 1.0f;
+    sd.isSensor = sensor;
     sd.enableContactEvents = contactEv;
     sd.enableSensorEvents = sensorEv;
     b2Circle c = {{0.0f, 0.0f}, radius};
@@ -53,7 +54,7 @@ Entity spawnPaddle(float x, float y) {
 Entity spawnBall(float x, float y) {
     Entity e = Entity::create();
     b2BodyId body = makeBody(e.entity(), b2_dynamicBody, x, y);
-    addCircle(body, Config::BALL_RADIUS, true, false);
+    addCircle(body, Config::BALL_RADIUS, false, true, false);
     float d = Config::BALL_RADIUS * 2.0f;
     e.addAll(Position{x, y}, Size{d, d},
              Drawable{1.0f, 0.95f, 0.40f, 1.0f, Shape::Circle},
@@ -65,8 +66,7 @@ Entity spawnWall(float x, float y, float w, float h) {
     Entity e = Entity::create();
     b2BodyId body = makeBody(e.entity(), b2_staticBody, x, y);
     addBox(body, w, h, false, false, false);
-    e.addAll(Position{x, y}, Size{w, h},
-             Drawable{0.40f, 0.40f, 0.50f, 1.0f, Shape::Rect}, PhysicsBody{body}, WallTag{});
+    e.addAll(Position{x, y}, Size{w, h}, PhysicsBody{body}, WallTag{});
     return e;
 }
 
@@ -119,7 +119,7 @@ Entity spawnDrop(int courseId, int courseIndex, float x, float y, DropType type,
 Entity spawnProjectile(int courseId, float x, float y, float vx, float vy) {
     Entity e = Entity::create();
     b2BodyId body = makeBody(e.entity(), b2_kinematicBody, x, y);
-    addCircle(body, 0.12f, true, false);
+    addCircle(body, 0.12f, true, false, true);
     b2Body_SetLinearVelocity(body, {vx, vy});
     e.addAll(Position{x, y}, Size{0.24f, 0.24f},
              Drawable{1.0f, 0.50f, 0.20f, 1.0f, Shape::Circle}, PhysicsBody{body}, ProjInfo{courseId}, ProjectileTag{});
@@ -145,7 +145,8 @@ Entity spawnGameState() {
     Entity e = Entity::create();
     GameState gs{
         Config::START_LIVES, Config::START_AVERAGE, Phase::PLAYING, -1, 0, Config::COURSES,
-        {}, 1, 0.0f, 0.0f, false, false};
+        {}, 1, 0.0f, 0.0f, false, false,
+        0.0f, 0.0f, 0, 0, 0.0f, false, 0};
     gs.taxOutcome.fill(GameState::TAX_PENDING);
     e.addAll(gs, GameStateTag{});
     return e;

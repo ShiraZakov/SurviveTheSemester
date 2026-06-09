@@ -33,5 +33,4 @@ public:
 private:
     SDL_Renderer* _renderer = nullptr;
     void setupScene();
-    void debugOverlay();
 };

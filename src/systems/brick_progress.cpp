@@ -160,6 +160,7 @@ void brickMeterSystem() {
             if (!brick.has<BrickTag>() || brick.has<DeadTag>()) continue;
 
             if (!brickIsPlayable(brick)) continue;
+            if (brick.get<BrickProgress>().filled >= brick.get<BrickProgress>().max) continue;
 
             const auto& pos = brick.get<Position>();
             const auto& info = brick.get<BrickInfo>();

@@ -54,6 +54,7 @@ static void startExam(int courseId) {
     gs.examTimer         = 0.0f;
     gs.examSpawnTimer    = 0.0f;   // spawn first projectile immediately
     gs.examHits          = 0;
+    gs.examProjSlot      = 0;
 }
 
 static void finishExam() {
@@ -94,9 +95,8 @@ void examSystem(float dt) {
     // Spawn a projectile when interval elapses
     if (gs.examSpawnTimer >= Config::EXAM_PROJ_INTERVAL) {
         gs.examSpawnTimer -= Config::EXAM_PROJ_INTERVAL;
-        static int slot = 0;
-        spawnExamProjectile(gs.activeExamCourse, slot);
-        ++slot;
+        spawnExamProjectile(gs.activeExamCourse, gs.examProjSlot);
+        ++gs.examProjSlot;
     }
 
     // Count projectile hits this frame

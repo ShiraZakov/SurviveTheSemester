@@ -48,6 +48,12 @@ struct GameState {
     float examTimer;        // elapsed seconds in the current exam
     float examSpawnTimer;   // seconds since the last projectile was spawned
     int   examHits;         // projectile hits taken this exam
+    int   examProjSlot;     // cycles 0→1→2 to distribute projectile spawn positions
+    // Input state
+    float prevMouseWorldX;  // previous frame mouse X for paddle velocity calculation
+    bool  hasPrevMouse;     // false until the first mouse sample is taken
+    // Hazard spawn tracking
+    int   lastHazardYear;   // the last year for which a hazard was spawned (0 = none)
 };
 
 // ---- Tags (empty; checked via has<>(), never get<>()) ----

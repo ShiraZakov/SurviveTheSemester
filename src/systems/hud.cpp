@@ -11,7 +11,7 @@
 static void drawCurrentAcademicMonth(SDL_Renderer* r, float centerX, float y, int currentMonth) {
     char line[32];
     std::snprintf(line, sizeof line, "Month: %s", Config::academicMonthShort(currentMonth));
-    constexpr float scale = 1.5f;
+    constexpr float scale = 1.2f;
     const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
         * static_cast<float>(std::strlen(line));
     const float drawX = (centerX - textW * 0.5f) / scale;
@@ -40,16 +40,18 @@ static const char* phaseName(Phase p) {
 void hudSystem(SDL_Renderer* r) {
     GameState& gs = gameState();
 
-    sprites::drawMeter3(r, gs.lives, Config::START_LIVES, 16.0f, 10.0f, 200.0f, 42.0f);
+    constexpr float livesW = 128.0f;
+    constexpr float livesH = livesW * (71.0f / 252.0f);
+    sprites::drawMeter3(r, gs.lives, Config::START_LIVES, 16.0f, 10.0f, livesW, livesH);
 
     // Year display — label + year number on one horizontal row, timer below
     if (sprites::ready()) {
-        constexpr float labelW = 200.0f;
-        constexpr float labelH = 48.0f;
-        constexpr float yearW  = 180.0f;
-        constexpr float yearH  = 54.0f;
-        constexpr float meterW = 260.0f;
-        constexpr float meterH = 20.0f;
+        constexpr float labelW = 155.0f;
+        constexpr float labelH = 36.0f;
+        constexpr float yearW  = 140.0f;
+        constexpr float yearH  = 42.0f;
+        constexpr float meterW = 160.0f;
+        constexpr float meterH = meterW * (71.0f / 252.0f); // natural sprite aspect ratio
         constexpr float gap    = 2.0f;
         const float cx = static_cast<float>(Config::WINDOW_W) * 0.5f;
         const float rowW = yearW + gap + labelW;
@@ -73,13 +75,16 @@ void hudSystem(SDL_Renderer* r) {
         drawCurrentAcademicMonth(r, cx, meterY + meterH + 6.0f, month);
     }
 
-    // Status line
-    SDL_SetRenderDrawColorFloat(r, 1.0f, 1.0f, 1.0f, 1.0f);
-    char buf[128];
-    std::snprintf(buf, sizeof buf, "%s  avg:%.0f  time:%.0fs  tax:%d/%d",
-                  phaseName(gs.phase), gs.average, gs.totalTime,
-                  countCaughtTax(gs), GameState::COURSE_GRADES);
-    SDL_RenderDebugText(r, 16.0f, 58.0f, buf);
+    // Status line — phase + average grade, scaled up for readability
+    {
+        char buf[64];
+        std::snprintf(buf, sizeof buf, "%s   avg: %.0f", phaseName(gs.phase), gs.average);
+        constexpr float scale = 1.4f;
+        SDL_SetRenderDrawColorFloat(r, 1.0f, 1.0f, 1.0f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r, 8.0f / scale, 52.0f / scale, buf);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+    }
 
     // Exam phase indicator
     if (gs.phase == Phase::EXAM) {
@@ -94,24 +99,43 @@ void hudSystem(SDL_Renderer* r) {
         SDL_SetRenderScale(r, scale, scale);
         SDL_RenderDebugText(r,
             (static_cast<float>(Config::WINDOW_W) * 0.5f - textW * 0.5f) / scale,
-            static_cast<float>(Config::WINDOW_H) * 0.40f / scale,
+            static_cast<float>(Config::WINDOW_H) * 0.66f / scale,
             examBuf);
         SDL_SetRenderScale(r, 1.0f, 1.0f);
     }
 
-    if (!gs.started && (gs.phase == Phase::PLAYING || gs.phase == Phase::LOST || gs.phase == Phase::WON)) {
-        SDL_SetRenderDrawColorFloat(r, 1.0f, 0.95f, 0.5f, 1.0f);
-        SDL_RenderDebugText(r, Config::WINDOW_W * 0.5f - 90.0f, Config::WINDOW_H * 0.42f,
-                            "Press SPACE to start");
+    if (!gs.started && gs.phase == Phase::PLAYING) {
+        constexpr float scale = 2.5f;
+        const char* msg = "Press SPACE to start";
+        const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+            * static_cast<float>(std::strlen(msg));
+        SDL_SetRenderDrawColorFloat(r, 1.0f, 0.95f, 0.3f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r,
+            (static_cast<float>(Config::WINDOW_W) * 0.5f - textW * 0.5f) / scale,
+            static_cast<float>(Config::WINDOW_H) * 0.70f / scale,
+            msg);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
     }
 
     if (gs.phase == Phase::WON || gs.phase == Phase::LOST) {
         char end[96];
         if (gs.phase == Phase::WON)
-            std::snprintf(end, sizeof end, "YOU WON  avg:%.0f  time:%.0fs  -  press R",
-                          gs.average, gs.totalTime);
+            std::snprintf(end, sizeof end, "YOU WON!  avg: %.0f  -  press R", gs.average);
         else
             std::snprintf(end, sizeof end, "GAME OVER  -  press R");
-        SDL_RenderDebugText(r, Config::WINDOW_W * 0.5f - 120.0f, Config::WINDOW_H * 0.5f, end);
+        constexpr float scale = 2.5f;
+        const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+            * static_cast<float>(std::strlen(end));
+        SDL_SetRenderDrawColorFloat(r,
+            gs.phase == Phase::WON ? 0.3f : 1.0f,
+            gs.phase == Phase::WON ? 1.0f : 0.3f,
+            0.2f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r,
+            (static_cast<float>(Config::WINDOW_W) * 0.5f - textW * 0.5f) / scale,
+            static_cast<float>(Config::WINDOW_H) * 0.62f / scale,
+            end);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
     }
 }
