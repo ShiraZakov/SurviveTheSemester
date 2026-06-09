@@ -8,6 +8,12 @@
 #include <cstdio>
 #include <cstring>
 
+/// @brief Renders the current academic month label centered at the given position.
+/// @param r SDL renderer
+/// @param centerX Horizontal center in pixels
+/// @param y Top edge of the text in pixels
+/// @param currentMonth Index 0–9 (Oct=0 … Jul=9)
+/// @return void
 static void drawCurrentAcademicMonth(SDL_Renderer* r, float centerX, float y, int currentMonth) {
     char line[32];
     std::snprintf(line, sizeof line, "Month: %s", Config::academicMonthShort(currentMonth));
@@ -23,6 +29,9 @@ static void drawCurrentAcademicMonth(SDL_Renderer* r, float centerX, float y, in
     SDL_SetRenderScale(r, 1.0f, 1.0f);
 }
 
+/// @brief Returns a short display string for the given game phase.
+/// @param p Current Phase enum value
+/// @return Null-terminated string literal
 static const char* phaseName(Phase p) {
     switch (p) {
         case Phase::MENU:    return "MENU";

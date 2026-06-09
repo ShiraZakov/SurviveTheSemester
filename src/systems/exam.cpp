@@ -13,12 +13,16 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
-// Spawn positions cycle left-center-right across the top of the field.
+/// @brief Returns the X world-coordinate for one of three spawn columns (left/center/right).
+/// @param slot Slot index; wraps with modulo 3
+/// @return X position in world units
 static inline float spawnSlotX(int slot) {
     constexpr float slots[3] = {0.22f, 0.50f, 0.78f};
     return Config::WORLD_W * slots[slot % 3];
 }
 
+/// @brief Returns the current X center of the paddle entity, or the screen midpoint if none exists.
+/// @return X position in world units
 static inline float paddleCenterX() {
     static const Mask mask = MaskBuilder().set<PaddleTag>().set<Position>().build();
     static int q = World::createQuery(mask);
@@ -27,6 +31,10 @@ static inline float paddleCenterX() {
     return p.get<Position>().x;
 }
 
+/// @brief Spawns one exam projectile from the given column slot, aimed at the paddle.
+/// @param courseId Course whose exam is active (stored in ProjInfo for hit attribution)
+/// @param slot Spawn column index (0=left, 1=center, 2=right)
+/// @return void
 static void spawnExamProjectile(int courseId, int slot) {
     const float sx = spawnSlotX(slot);
     const float sy = Config::WALL + 0.4f;
@@ -40,6 +48,8 @@ static void spawnExamProjectile(int courseId, int slot) {
     spawnProjectile(courseId, sx, sy, dx / len * speed, dy / len * speed);
 }
 
+/// @brief Tags all live projectile entities as Dead so they are removed at end of frame.
+/// @return void
 static void clearExamProjectiles() {
     static const Mask mask = MaskBuilder().set<ProjectileTag>().build();
     static int q = World::createQuery(mask);
@@ -47,6 +57,9 @@ static void clearExamProjectiles() {
         if (!e.has<DeadTag>()) e.add(DeadTag{});
 }
 
+/// @brief Transitions GameState into Phase::EXAM and resets all exam counters/timers.
+/// @param courseId Course that triggered the exam
+/// @return void
 static void startExam(int courseId) {
     GameState& gs = gameState();
     gs.phase             = Phase::EXAM;
@@ -57,6 +70,9 @@ static void startExam(int courseId) {
     gs.examProjSlot      = 0;
 }
 
+/// @brief Calculates the exam grade, emits ExamFinished, clears projectiles,
+///        and returns GameState to Phase::PLAYING.
+/// @return void
 static void finishExam() {
     GameState& gs = gameState();
     const float grade = std::max(

@@ -14,7 +14,10 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
-// Returns a pseudo-random float in [lo, hi] using SDL_rand.
+/// @brief Returns a pseudo-random float uniformly distributed in [lo, hi].
+/// @param lo Lower bound (inclusive)
+/// @param hi Upper bound (inclusive)
+/// @return Random float in [lo, hi]
 static inline float randRange(float lo, float hi) {
     return lo + (static_cast<float>(SDL_rand(10000)) / 10000.0f) * (hi - lo);
 }
