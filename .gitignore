@@ -6,3 +6,6 @@
 *.user
 .DS_Store
 Thumbs.db
+
+# Local AI assistant context — not part of the project source
+CLAUDE.md
