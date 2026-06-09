@@ -100,6 +100,14 @@ namespace Config {
         return courseIndex >= start && courseIndex < start + yearCourseCount(year);
     }
 
+    // Exam phase
+    constexpr float EXAM_DURATION      = 15.0f;  // seconds per exam
+    constexpr float EXAM_PROJ_INTERVAL =  3.0f;  // seconds between projectile spawns
+    constexpr float EXAM_PROJ_SPEED    =  7.0f;  // m/s
+    constexpr float EXAM_BASE_GRADE    = 100.0f;
+    constexpr float EXAM_HIT_PENALTY   = 12.0f;  // deducted per projectile hit; <=3 hits = pass
+    constexpr float EXAM_MIN_GRADE     = 55.0f;  // floor so grade never reads 0
+
     // Course color (graphical identity). Writes rgb in 0..1.
     inline void courseColor(int id, float& r, float& g, float& b) {
         switch (((id % COURSES) + COURSES) % COURSES) {

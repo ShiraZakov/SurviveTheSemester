@@ -11,6 +11,12 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Moves the paddle from mouse/keyboard input (kinematic), clamps it to the
+///        play field, and parks stationary balls on top of the paddle until launch.
+/// @param keys SDL keyboard state array
+/// @param dt   Fixed timestep in seconds
+/// @param r    SDL renderer (used to resolve window position for mouse coords)
+/// @return void
 void inputSystem(const bool* keys, float dt, SDL_Renderer* r) {
     float globalMouseX = 0.0f, globalMouseY = 0.0f;
     SDL_GetGlobalMouseState(&globalMouseX, &globalMouseY);

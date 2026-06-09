@@ -10,6 +10,10 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Removes drops that have fallen below the screen floor. Tax drops that
+///        are missed emit a TaxMissed event before being tagged for deletion.
+/// @param dt Fixed timestep in seconds (unused, reserved for future timed effects)
+/// @return void
 void dropSystem(float dt) {
     (void)dt;
     static const Mask mask = MaskBuilder()

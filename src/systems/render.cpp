@@ -66,6 +66,10 @@ static void drawTaxDrop(SDL_Renderer* r, float cx, float cy, float half) {
     SDL_RenderFillRect(r, &bar);
 }
 
+/// @brief Draws all entities that have Position + Size + Drawable components.
+///        Handles sprites, fallback primitives, tax drop visuals, and brick meters.
+/// @param r SDL renderer
+/// @return void
 void renderSystem(SDL_Renderer* r) {
     static const Mask mask = MaskBuilder()
         .set<Position>()

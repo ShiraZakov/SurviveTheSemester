@@ -5,7 +5,6 @@
 #include "Sprites.h"
 
 #include <box2d/box2d.h>
-#include <cstdint>
 
 using bagel::Entity;
 using bagel::ent_type;
@@ -130,7 +129,7 @@ Entity spawnProjectile(int courseId, float x, float y, float vx, float vy) {
 Entity spawnHazard(int courseId, float x, float y, HazardType type) {
     Entity e = Entity::create();
     b2BodyId body = makeBody(e.entity(), b2_staticBody, x, y);
-    addBox(body, 0.5f, 0.5f, false, true, false);
+    addBox(body, 0.5f, 0.5f, true, false, true);  // sensor: ball passes through, sensorEv fires
     e.addAll(Position{x, y}, Size{0.5f, 0.5f},
              Drawable{0.70f, 0.20f, 0.70f, 1.0f, Shape::Rect}, PhysicsBody{body}, HazardInfo{courseId, type}, HazardTag{});
     return e;

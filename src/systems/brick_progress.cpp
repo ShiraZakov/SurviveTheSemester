@@ -86,6 +86,10 @@ static void tryAdvanceBrick(Entity brick) {
     prog.clearDelay = Config::BRICK_CLEAR_DELAY;
 }
 
+/// @brief Counts down clearDelay timers on full bricks; destroys brick + spawns Tax
+///        drop when the timer reaches zero.
+/// @param dt Fixed timestep in seconds
+/// @return void
 void brickClearDelaySystem(float dt) {
     static const Mask mask = MaskBuilder()
         .set<BrickTag>()
@@ -108,6 +112,9 @@ void brickClearDelaySystem(float dt) {
     }
 }
 
+/// @brief Checks prerequisite courses for every locked brick and unlocks them
+///        (updating sprite) when all required courses are cleared.
+/// @return void
 void brickUnlockSystem() {
     static const Mask mask = MaskBuilder()
         .set<BrickTag>()
@@ -139,6 +146,9 @@ void brickUnlockSystem() {
     }
 }
 
+/// @brief Consumes CourseHit events to advance brick meters and spawn Assignment
+///        drops. Consumes DropCaught (Assignment) events to further advance meters.
+/// @return void
 void brickMeterSystem() {
     {
         static const Mask mask = MaskBuilder().set<CourseHit>().build();
