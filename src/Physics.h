@@ -16,6 +16,7 @@ namespace phys {
     void setVelocity(bagel::ent_type e, float vx, float vy);
     void getVelocity(bagel::ent_type e, float& vx, float& vy);
     void setPosition(bagel::ent_type e, float x, float y);
+    void destroyBody(bagel::ent_type e);  // destroy Box2D body if entity has one
 }
 
 // Systems (called by the scheduler in game.cpp).

@@ -25,6 +25,11 @@ static bool yearCoursesCleared(int year) {
     return true;
 }
 
+/// @brief Advances the academic year timer. Moves to the next year when all its
+///        courses are cleared or the 30-second timer expires. Sets yearsExhausted
+///        if year 5 ends without completing everything.
+/// @param dt Fixed timestep in seconds
+/// @return void
 void yearSystem(float dt) {
     GameState& gs = gameState();
     if (gs.phase != Phase::PLAYING && gs.phase != Phase::EXAM) return;

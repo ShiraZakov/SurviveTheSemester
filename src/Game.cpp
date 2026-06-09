@@ -9,7 +9,6 @@
 
 #include <SDL3/SDL.h>
 #include <box2d/box2d.h>
-#include <vector>
 #include <cstdio>
 #include <cstring>
 
@@ -34,38 +33,40 @@ bagel::ent_type courseEntity(int id) {
     return {-1};
 }
 
+/// @brief Destroys all event entities (EventTag) at end of frame. One-frame lifetime.
+/// @return void
 void eventCleanupSystem() {
     static const Mask mask = MaskBuilder().set<EventTag>().build();
     static int q = World::createQuery(mask);
 
-    std::vector<ent_type> dead;
+    bagel::Bag<ent_type, 64> dead;
     for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
-        dead.push_back(e.entity());
-    for (ent_type id : dead) Entity(id).destroy();
+        dead.push(e.entity());
+    for (int i = 0; i < dead.size(); ++i) Entity(dead[i]).destroy();
 }
 
+/// @brief Destroys all entities tagged DeadTag, including their Box2D bodies.
+/// @return void
 void deadCleanupSystem() {
     static const Mask mask = MaskBuilder().set<DeadTag>().build();
     static int q = World::createQuery(mask);
 
-    std::vector<ent_type> dead;
+    bagel::Bag<ent_type, 64> dead;
     for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
-        dead.push_back(e.entity());
-    for (ent_type id : dead) {
-        Entity e(id);
-        if (e.has<PhysicsBody>()) b2DestroyBody(e.get<PhysicsBody>().body);
-        e.destroy();
+        dead.push(e.entity());
+    for (int i = 0; i < dead.size(); ++i) {
+        phys::destroyBody(dead[i]);
+        Entity(dead[i]).destroy();
     }
 }
 
 static void clearAll() {
-    std::vector<ent_type> all;
+    bagel::Bag<ent_type, 256> all;
     for (Entity e = Entity::first(); !e.eof(); e.next())
-        if (e.mask().ctz() >= 0) all.push_back(e.entity());
-    for (ent_type id : all) {
-        Entity e(id);
-        if (e.has<PhysicsBody>()) b2DestroyBody(e.get<PhysicsBody>().body);
-        e.destroy();
+        if (e.mask().ctz() >= 0) all.push(e.entity());
+    for (int i = 0; i < all.size(); ++i) {
+        phys::destroyBody(all[i]);
+        Entity(all[i]).destroy();
     }
 }
 

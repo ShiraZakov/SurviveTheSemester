@@ -19,6 +19,9 @@ static bool allBricksCleared() {
     return true;
 }
 
+/// @brief Folds LifeLost, DropCaught (Tax), TaxMissed, and ExamFinished events into
+///        GameState (lives, average, coursesDone). Resolves win/lose conditions.
+/// @return void
 void gameStateSystem() {
     GameState& gs = gameState();
 

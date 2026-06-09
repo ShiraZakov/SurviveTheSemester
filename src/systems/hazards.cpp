@@ -11,6 +11,9 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Consumes HazardTriggered events and applies effects: LoseLife emits
+///        LifeLost; ReduceProgress subtracts 25% from the target course's progress.
+/// @return void
 void hazardSystem() {
     static const Mask mask = MaskBuilder().set<HazardTriggered>().build();
     static int q = World::createQuery(mask);

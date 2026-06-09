@@ -23,6 +23,9 @@ static void bump(int courseId, float amount) {
     }
 }
 
+/// @brief Advances course progress from BrickCleared events. When a course reaches
+///        100% it transitions to DONE and emits ExamStarted.
+/// @return void
 void courseProgressSystem() {
     // 0.14 * 8 bricks per row > 1.0, so clearing a course's bricks completes it
     // (drives the end-to-end demo). MAY: retune once real drops/weights exist.

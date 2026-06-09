@@ -46,7 +46,7 @@ static void ballLossSystem() {
     }
 }
 
-static float clampf(float v, float lo, float hi) {
+static inline float clampf(float v, float lo, float hi) {
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
@@ -109,6 +109,10 @@ static void paddleHitSystem() {
     }
 }
 
+/// @brief Handles paddle-ball bounce physics and ball-loss detection.
+///        Dispatches to paddleHitSystem (consumes PaddleHit events) and
+///        ballLossSystem (resets ball + emits LifeLost when ball falls below floor).
+/// @return void
 void courseHitSystem() {
     paddleHitSystem();
     ballLossSystem();

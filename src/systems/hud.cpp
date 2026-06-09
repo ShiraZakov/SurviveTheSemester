@@ -33,6 +33,10 @@ static const char* phaseName(Phase p) {
     }
 }
 
+/// @brief Draws the HUD: lives pips, year badge, year timer bar, academic month,
+///        status line, start prompt, and win/lose overlay. Graphical only — no SDL_ttf.
+/// @param r SDL renderer
+/// @return void
 void hudSystem(SDL_Renderer* r) {
     GameState& gs = gameState();
 
@@ -76,6 +80,24 @@ void hudSystem(SDL_Renderer* r) {
                   phaseName(gs.phase), gs.average, gs.totalTime,
                   countCaughtTax(gs), GameState::COURSE_GRADES);
     SDL_RenderDebugText(r, 16.0f, 58.0f, buf);
+
+    // Exam phase indicator
+    if (gs.phase == Phase::EXAM) {
+        const float remaining = Config::EXAM_DURATION - gs.examTimer;
+        const int   secs      = remaining > 0.0f ? static_cast<int>(remaining) + 1 : 0;
+        char examBuf[64];
+        std::snprintf(examBuf, sizeof examBuf, "EXAM  time:%ds  hits:%d", secs, gs.examHits);
+        constexpr float scale = 2.0f;
+        const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+            * static_cast<float>(std::strlen(examBuf));
+        SDL_SetRenderDrawColorFloat(r, 1.0f, 0.30f, 0.20f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r,
+            (static_cast<float>(Config::WINDOW_W) * 0.5f - textW * 0.5f) / scale,
+            static_cast<float>(Config::WINDOW_H) * 0.40f / scale,
+            examBuf);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+    }
 
     if (!gs.started && (gs.phase == Phase::PLAYING || gs.phase == Phase::LOST || gs.phase == Phase::WON)) {
         SDL_SetRenderDrawColorFloat(r, 1.0f, 0.95f, 0.5f, 1.0f);

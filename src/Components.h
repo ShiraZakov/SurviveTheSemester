@@ -4,7 +4,6 @@
 #include "bagel.h"
 #include "Enums.h"
 #include <array>
-#include <cstdint>
 #include <SDL3/SDL.h>
 #include <box2d/id.h>   // b2BodyId only (lightweight, no full Box2D dependency)
 
@@ -45,6 +44,10 @@ struct GameState {
     float totalTime;        // total elapsed seconds (score: lower is better)
     bool  yearsExhausted;   // true when year 5 ended without clearing everything
     bool  started;          // false until first Space launch; timers wait for this
+    // Exam phase state (valid only while phase == EXAM)
+    float examTimer;        // elapsed seconds in the current exam
+    float examSpawnTimer;   // seconds since the last projectile was spawned
+    int   examHits;         // projectile hits taken this exam
 };
 
 // ---- Tags (empty; checked via has<>(), never get<>()) ----
