@@ -12,6 +12,10 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Adds progress to a course and fires ExamStarted when it reaches 100%.
+/// @param courseId ID of the course to advance
+/// @param amount Progress fraction to add (0.0–1.0)
+/// @return void
 static void bump(int courseId, float amount) {
     auto c = courseEntity(courseId);
     if (c.id < 0) return;
