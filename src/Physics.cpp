@@ -129,18 +129,6 @@ static void onContactPair(ent_type a, ent_type b) {
     if (a.id < 0 || b.id < 0) return;
     Entity ea{a}, eb{b};
 
-    // Projectile-paddle: exam hit
-    {
-        Entity proj{a}, tgt{b};
-        if      (ea.has<ProjectileTag>()) { proj = ea; tgt = eb; }
-        else if (eb.has<ProjectileTag>()) { proj = eb; tgt = ea; }
-        if (proj.has<ProjectileTag>() && tgt.has<PaddleTag>() && proj.has<ProjInfo>()) {
-            ev::projectileHit(proj.get<ProjInfo>().courseId);
-            proj.add(DeadTag{});   // remove projectile on impact
-            return;
-        }
-    }
-
     // Ball-driven contacts
     Entity ball{a}, other{b};
     if      (ea.has<BallTag>()) { ball = ea; other = eb; }
@@ -159,6 +147,20 @@ static void onContactPair(ent_type a, ent_type b) {
 static void onSensorPair(ent_type sensor, ent_type visitor) {
     if (sensor.id < 0 || visitor.id < 0) return;
     Entity s{sensor}, v{visitor};
+
+    // Projectile sensor hits paddle or ball
+    if (s.has<ProjectileTag>() && s.has<ProjInfo>() && !s.has<DeadTag>() &&
+        (v.has<PaddleTag>() || v.has<BallTag>())) {
+        ev::projectileHit(s.get<ProjInfo>().courseId);
+        s.add(DeadTag{});
+        return;
+    }
+    if (v.has<ProjectileTag>() && v.has<ProjInfo>() && !v.has<DeadTag>() &&
+        (s.has<PaddleTag>() || s.has<BallTag>())) {
+        ev::projectileHit(v.get<ProjInfo>().courseId);
+        v.add(DeadTag{});
+        return;
+    }
 
     // Drop caught by paddle
     if (s.has<DropTag>() && s.has<DropInfo>() && !s.has<DeadTag>() && v.has<PaddleTag>()) {

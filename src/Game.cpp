@@ -84,7 +84,7 @@ void SurviveGame::setupScene() {
     const float bw = Config::BRICK_W, bh = Config::BRICK_H, gap = Config::BRICK_GAP;
     const float gridW = Config::brickGridWidth();
     const float startX = (W - gridW) * 0.5f + bw * 0.5f;
-    const float startY = 2.4f;
+    const float startY = 3.2f;
     for (int row = 0; row < Config::COURSES; ++row)
         for (int col = 0; col < Config::BRICK_COLS; ++col) {
             float x = startX + col * (bw + gap);
@@ -95,7 +95,7 @@ void SurviveGame::setupScene() {
 
     const float paddleY = Config::paddleY();
     spawnPaddle(W * 0.5f, paddleY);
-    spawnBall(W * 0.5f, paddleY - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.04f);
+    spawnBall(W * 0.5f, paddleY + Config::PADDLE_H * 0.5f - Config::PADDLE_VISUAL_H - Config::BALL_RADIUS + 0.3f);
 }
 
 bool SurviveGame::init(SDL_Renderer* renderer) {
@@ -170,55 +170,11 @@ void SurviveGame::tick(const bool* keys, float dt) {
     }
 }
 
-void SurviveGame::debugOverlay() {
-    int ents = 0;
-    for (Entity e = Entity::first(); !e.eof(); e.next())
-        if (e.mask().ctz() >= 0) ++ents;
-    int evs = 0;
-    {
-        static const Mask mask = MaskBuilder().set<EventTag>().build();
-        static int q = World::createQuery(mask);
-        for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) ++evs;
-    }
-
-    SDL_SetRenderDrawColorFloat(_renderer, 0.6f, 0.9f, 0.6f, 1.0f);
-    char buf[128];
-    std::snprintf(buf, sizeof buf, "entities:%d  events:%d", ents, evs);
-    SDL_RenderDebugText(_renderer, 8.0f, Config::WINDOW_H - 28.0f, buf);
-    SDL_RenderDebugText(_renderer, 8.0f, Config::WINDOW_H - 16.0f,
-                        "A/D move  Space launch  H/J/E/K/L debug events  R restart  Esc quit");
-
-    char row2[64] = "row2:";
-    int finals = 0;
-    {
-        static const Mask mask = MaskBuilder()
-            .set<BrickTag>()
-            .set<BrickInfo>()
-            .set<Position>()
-            .build();
-        static int q = World::createQuery(mask);
-        for (Entity b = World::first(q); !World::eof(q); b = World::next(q)) {
-            if (b.has<DeadTag>()) continue;
-            const int ci = b.get<BrickInfo>().courseIndex;
-            if (ci == sprites::FINAL_COURSE_INDEX) ++finals;
-            if (b.get<Position>().y < 4.5f) continue;
-            char tmp[8];
-            std::snprintf(tmp, sizeof tmp, " %d", ci);
-            if (std::strlen(row2) + std::strlen(tmp) + 1 < sizeof row2)
-                std::strcat(row2, tmp);
-        }
-    }
-    char fin[32];
-    std::snprintf(fin, sizeof fin, "  finals:%d", finals);
-    std::strncat(row2, fin, sizeof row2 - std::strlen(row2) - 1);
-    SDL_RenderDebugText(_renderer, 8.0f, Config::WINDOW_H - 44.0f, row2);
-}
 
 void SurviveGame::draw() {
     SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
     SDL_RenderClear(_renderer);
     renderSystem(_renderer);
     hudSystem(_renderer);
-    debugOverlay();
     SDL_RenderPresent(_renderer);
 }

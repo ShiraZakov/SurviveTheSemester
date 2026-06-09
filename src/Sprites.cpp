@@ -4,7 +4,6 @@
 #include <SDL3_image/SDL_image.h>
 
 #include <array>
-#include <cstdint>
 #include <string>
 
 namespace sprites {

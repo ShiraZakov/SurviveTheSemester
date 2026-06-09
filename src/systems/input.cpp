@@ -4,6 +4,7 @@
 #include "Components.h"
 #include "Config.h"
 #include "Physics.h"
+#include "Game.h"
 #include <SDL3/SDL.h>
 
 using bagel::Entity;
@@ -26,13 +27,12 @@ void inputSystem(const bool* keys, float dt, SDL_Renderer* r) {
     SDL_Window* window = SDL_GetRenderWindow(r);
     if (window) SDL_GetWindowPosition(window, &windowX, &windowY);
     const float mouseWorldX = (globalMouseX - (float)windowX) / Config::PPM;
-    static float prevMouseWorldX = mouseWorldX;
-    static bool hasPrevMouse = false;
+    GameState& gs = gameState();
     float mouseVx = 0.0f;
-    if (hasPrevMouse && dt > 0.0f)
-        mouseVx = (mouseWorldX - prevMouseWorldX) / dt;
-    prevMouseWorldX = mouseWorldX;
-    hasPrevMouse = true;
+    if (gs.hasPrevMouse && dt > 0.0f)
+        mouseVx = (mouseWorldX - gs.prevMouseWorldX) / dt;
+    gs.prevMouseWorldX = mouseWorldX;
+    gs.hasPrevMouse    = true;
 
     static const Mask paddleMask = MaskBuilder()
         .set<PaddleTag>()
@@ -80,7 +80,7 @@ void inputSystem(const bool* keys, float dt, SDL_Renderer* r) {
     if (World::eof(paddleQuery)) return;
 
     const auto& paddlePos = paddle.get<Position>();
-    const float parkedY = Config::paddleY() - Config::PADDLE_H * 0.5f - Config::BALL_RADIUS - 0.04f;
+    const float parkedY = Config::paddleY() + Config::PADDLE_H * 0.5f - Config::PADDLE_VISUAL_H - Config::BALL_RADIUS + 0.3f;
 
     for (Entity ball = World::first(ballQuery); !World::eof(ballQuery); ball = World::next(ballQuery)) {
         float vx = 0.0f, vy = 0.0f;

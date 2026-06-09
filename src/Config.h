@@ -6,7 +6,7 @@
 namespace Config {
     // Window / world
     constexpr int   WINDOW_W = 1200;
-    constexpr int   WINDOW_H = 900;
+    constexpr int   WINDOW_H = 940;
     constexpr float PPM      = 72.0f;                 // pixels per meter
     constexpr float WORLD_W  = WINDOW_W / PPM;
     constexpr float WORLD_H  = WINDOW_H / PPM;
@@ -19,12 +19,13 @@ namespace Config {
     constexpr float WALL         = 0.35f;
     constexpr float BALL_RADIUS  = 0.24f;
     constexpr float BALL_SPEED   = 9.0f;
-    constexpr float PADDLE_W     = 3.4f;              // MTA paddle art ~ 2.2:1
+    constexpr float PADDLE_W     = 2.8f;              // MTA paddle art ~ 2.2:1
     constexpr float PADDLE_H     = 0.72f;
+    constexpr float PADDLE_VISUAL_H = PADDLE_W * (351.0f / 563.0f); // full sprite height in world units
     constexpr float PADDLE_SPEED = 14.0f;
-    constexpr float BRICK_W      = 1.55f;             // course brick art ~ 1:1.32
-    constexpr float BRICK_H      = 2.05f;
-    constexpr float BRICK_GAP    = 0.10f;
+    constexpr float BRICK_W      = 1.65f;             // course brick art ~ 1:1.32
+    constexpr float BRICK_H      = 1.85f;
+    constexpr float BRICK_GAP    = 0.15f;
     constexpr int   BRICK_COLS   = 7;                 // 7×3 = 21 courses, one brick each
     constexpr int   COURSES      = 3;
     constexpr float DROP_SIZE    = 0.55f;
