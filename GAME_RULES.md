@@ -77,11 +77,10 @@ Three types of drops fall from bricks and must be caught with the paddle.
 ### Exam Phase
 
 - The game enters `Phase::EXAM` for the active course.
-- A timer counts down (10–15 seconds).
-- **Projectiles** are launched toward the paddle — dodge them to survive.
-- Surviving the exam earns a **grade** that contributes to your average.
-- Failing the exam reduces your average.
-- After the exam, the course is marked **Done** and play resumes.
+- A timer counts down (**15 seconds**).
+- **Projectiles** are launched toward the paddle every 3 seconds — dodge them to survive.
+- Grade starts at **100** and loses **12 points per projectile hit**, with a minimum of **55**.
+- After the exam, the course is marked **Done**, the grade is added to the weighted average, and play resumes.
 
 ---
 
@@ -109,12 +108,13 @@ Three types of drops fall from bricks and must be caught with the paddle.
 
 ## Academic Hazards
 
-Hazard entities appear on the field and are triggered when the ball hits them.
+Starting from **Year 2**, one hazard entity spawns at the beginning of each new year.
+It appears at a random position in the middle third of the field and is triggered when the ball passes through it.
 
 | Hazard Type | Effect |
 |-------------|--------|
 | `LoseLife` | Lose 1 life immediately |
-| `ReduceProgress` | The target course loses 25% of its progress |
+| `ReduceProgress` | The target course loses 25% of its progress *(not yet active)* |
 
 ---
 
