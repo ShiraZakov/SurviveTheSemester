@@ -88,8 +88,6 @@ void gameStateSystem() {
         if (gs.phase == Phase::LOST || gs.phase == Phase::WON)
             gs.started = false;
     } else if (gs.phase == Phase::GRADUATION && gs.lives <= 0) {
-        gs.phase = Phase::LOST;
-        gs.started = false;
-        gs.gradAwaitingSpace = false;
+        graduationOnLivesDepleted();
     }
 }

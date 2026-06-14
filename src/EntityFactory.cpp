@@ -140,16 +140,7 @@ Entity spawnGradChair(int index, float x, float y) {
     e.addAll(Position{x, y}, Size{Config::GRAD_CHAIR_W, Config::GRAD_CHAIR_H},
              Drawable{1.0f, 1.0f, 1.0f, 1.0f, Shape::Rect},
              sprites::makePart(sprites::Id::GRAD_CHAIR),
-             GradChairInfo{index, false, false}, GradChairTag{});
-    return e;
-}
-
-Entity spawnGradStageBackground() {
-    const float h = (static_cast<float>(Config::WINDOW_W) * Config::GRAD_BG_ASPECT) / Config::PPM;
-    Entity e = Entity::create();
-    e.addAll(Position{Config::WORLD_W * 0.5f, h * 0.5f}, Size{Config::WORLD_W, h},
-             Drawable{1.0f, 1.0f, 1.0f, 1.0f, Shape::Rect},
-             sprites::makePart(sprites::Id::GRAD_STAGE_BACKGROUND), GradStageTag{});
+             GradChairInfo{index, false}, GradChairTag{});
     return e;
 }
 

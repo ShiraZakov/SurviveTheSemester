@@ -29,10 +29,33 @@ static void markTagDead() {
         e.add(DeadTag{});
 }
 
-static Entity gradStudent() {
-    static const Mask mask = MaskBuilder().set<GradStudentTag>().set<Position>().build();
-    static int q = World::createQuery(mask);
-    return World::eof(q) ? Entity{ent_type{-1}} : World::first(q);
+static bool gradStudent(Entity& out) {
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradStudentTag>() || !e.has<Position>()) continue;
+        out = e;
+        return true;
+    }
+    return false;
+}
+
+template<typename Fn>
+static void forEachGradObstacle(Fn&& fn) {
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradObstacleTag>() || !e.has<GradObstacleInfo>() || !e.has<Position>()) continue;
+        fn(e);
+    }
+}
+
+template<typename Fn>
+static void forEachGradObstacleWithSize(Fn&& fn) {
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradObstacleTag>() || !e.has<GradObstacleInfo>()
+            || !e.has<Position>() || !e.has<Size>()) continue;
+        fn(e);
+    }
 }
 
 static bool verticalOverlap(float ay, float ah, float by, float bh) {
@@ -65,8 +88,7 @@ static bool obstaclePushContact(float sx, float sy, float sw, float sh,
 }
 
 static void pushStudentOutsideObstacle(GameState& gs, float sy, float sw, float sh,
-                                       float ox, float oy, float ow, float oh, float dir) {
-    (void)dir;
+                                       float ox, float oy, float ow, float oh) {
     if (!verticalOverlap(sy, sh, oy, oh)) return;
     if (!boxesOverlap(gs.gradStudentX, sy, sw, sh, ox, oy, ow, oh)) return;
 
@@ -90,25 +112,21 @@ static float clampStudentXAgainstObstacles(float x, float sy, float sw, float sh
     if (gradNextChair <= 0) return x;
 
     const int rowGap = gradNextChair - 1;
-
-    static const Mask mask = MaskBuilder()
-        .set<GradObstacleTag>().set<GradObstacleInfo>().set<Position>().set<Size>().build();
-    static int q = World::createQuery(mask);
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+    forEachGradObstacleWithSize([&](Entity e) {
         const auto& info = e.get<GradObstacleInfo>();
-        if (info.rowGap != rowGap) continue;
+        if (info.rowGap != rowGap) return;
 
         const auto& op = e.get<Position>();
         const auto& os = e.get<Size>();
-        if (!verticalOverlap(sy, sh, op.y, os.h)) continue;
-        if (!horizontalOverlap(x, sw, op.x, os.w)) continue;
+        if (!verticalOverlap(sy, sh, op.y, os.h)) return;
+        if (!horizontalOverlap(x, sw, op.x, os.w)) return;
 
         const float leftPos = op.x - (os.w + sw) * 0.5f - 0.03f;
         const float rightPos = op.x + (os.w + sw) * 0.5f + 0.03f;
         const float distLeft = x > leftPos ? x - leftPos : leftPos - x;
         const float distRight = x > rightPos ? x - rightPos : rightPos - x;
         x = distLeft <= distRight ? leftPos : rightPos;
-    }
+    });
     return Config::clampGradStudentX(x, halfW);
 }
 
@@ -134,24 +152,6 @@ static void resolveStudentAgainstObstacles(float sy, float sw, float sh, int gra
         gs.gradStudentX, sy, sw, sh, gradNextChair);
 }
 
-static bool jumpBlockedByObstacle(float worldX, int gradNextChair) {
-    const int rowGap = gradNextChair > 0 ? gradNextChair - 1 : 0;
-    const float w = Config::GRAD_STUDENT_W;
-
-    static const Mask mask = MaskBuilder()
-        .set<GradObstacleTag>().set<GradObstacleInfo>().set<Position>().set<Size>().build();
-    static int q = World::createQuery(mask);
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-        const auto& info = e.get<GradObstacleInfo>();
-        if (info.rowGap != rowGap) continue;
-
-        const auto& op = e.get<Position>();
-        const auto& os = e.get<Size>();
-        if (horizontalOverlap(worldX, w, op.x, os.w)) return true;
-    }
-    return false;
-}
-
 static float vaultArcHeight(int gradNextChair) {
     return gradNextChair <= 0 ? 1.15f : 0.85f;
 }
@@ -161,10 +161,9 @@ static float animEase(float t) {
 }
 
 static void resetObstacleContactFlags() {
-    static const Mask mask = MaskBuilder().set<GradObstacleTag>().set<GradObstacleInfo>().build();
-    static int q = World::createQuery(mask);
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
+    forEachGradObstacle([&](Entity e) {
         e.get<GradObstacleInfo>().contactFouled = false;
+    });
 }
 
 static void spawnGraduationObstacles() {
@@ -175,61 +174,59 @@ static void spawnGraduationObstacles() {
     spawnGradObstacle(rowRight - obHalf - 0.25f, 1, -1.0f);
 }
 
-static void flushDeadEntities() {
-    static const Mask mask = MaskBuilder().set<DeadTag>().build();
-    static int q = World::createQuery(mask);
-    if (World::eof(q)) return;
-    bagel::Bag<ent_type, 128> dead;
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
-        dead.push(e.entity());
-    for (int i = 0; i < dead.size(); ++i) {
-        phys::destroyBody(dead[i]);
-        Entity(dead[i]).destroy();
-    }
-}
-
-static bool hasGradStageEntity() {
-    static const Mask mask = MaskBuilder().set<GradStageTag>().build();
-    static int q = World::createQuery(mask);
-    return !World::eof(q);
-}
-
 static int countGradChairEntities() {
     int count = 0;
-    static const Mask mask = MaskBuilder().set<GradChairTag>().build();
-    static int q = World::createQuery(mask);
-    if (World::eof(q)) return 0;
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradChairTag>()) continue;
         ++count;
+    }
     return count;
 }
 
 static int countGradObstacleEntities() {
     int count = 0;
-    static const Mask mask = MaskBuilder().set<GradObstacleTag>().build();
-    static int q = World::createQuery(mask);
-    if (World::eof(q)) return 0;
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradObstacleTag>()) continue;
         ++count;
+    }
     return count;
 }
 
 static void markGradChairIndices(bool (&haveChair)[Config::GRAD_CHAIR_ROWS * Config::GRAD_CHAIR_COLS]) {
-    static const Mask mask = MaskBuilder().set<GradChairTag>().set<GradChairInfo>().build();
-    static int q = World::createQuery(mask);
-    if (World::eof(q)) return;
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradChairTag>() || !e.has<GradChairInfo>()) continue;
         const int index = e.get<GradChairInfo>().index;
         if (index >= 0 && index < Config::graduationChairTotal())
             haveChair[index] = true;
     }
 }
 
-static void spawnMissingGradChairs() {
+static bool allGradChairSlotsFilled() {
     bool haveChair[Config::GRAD_CHAIR_ROWS * Config::GRAD_CHAIR_COLS]{};
     markGradChairIndices(haveChair);
-    for (int i = 0; i < Config::graduationChairTotal(); ++i) {
-        if (haveChair[i]) continue;
+    for (int i = 0; i < Config::graduationChairTotal(); ++i)
+        if (!haveChair[i]) return false;
+    return true;
+}
+
+static void spawnMissingGradChairs() {
+    const int need = Config::graduationChairTotal();
+    if (allGradChairSlotsFilled() && countGradChairEntities() == need)
+        return;
+
+    bagel::Bag<ent_type, 32> toDestroy;
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradChairTag>()) continue;
+        toDestroy.push(e.entity());
+    }
+    for (int i = 0; i < toDestroy.size(); ++i)
+        Entity(toDestroy[i]).destroy();
+
+    for (int i = 0; i < need; ++i) {
         float x = 0.0f, y = 0.0f;
         Config::graduationChairPos(i, x, y);
         spawnGradChair(i, x, y);
@@ -239,10 +236,11 @@ static void spawnMissingGradChairs() {
 static void resetGraduationProgress();
 
 static void unhideAllGradChairs() {
-    static const Mask chairMask = MaskBuilder().set<GradChairTag>().set<GradChairInfo>().build();
-    static int chairQ = World::createQuery(chairMask);
-    for (Entity e = World::first(chairQ); !World::eof(chairQ); e = World::next(chairQ))
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradChairTag>() || !e.has<GradChairInfo>()) continue;
         e.get<GradChairInfo>().hidden = false;
+    }
 }
 
 static void clearGraduationAnim(GameState& gs) {
@@ -269,7 +267,7 @@ static void onGraduationFoul() {
     gs.gradBeingDragged = false;
 
     if (gs.lives <= 0) {
-        endGraduationLost(gs);
+        graduationOnLivesDepleted();
         return;
     }
 
@@ -309,27 +307,26 @@ static void applyObstacleDrag(float dt) {
     const float maxX = rowRight - halfW;
     constexpr float edgeEps = 0.04f;
 
-    static const Mask mask = MaskBuilder()
-        .set<GradObstacleTag>().set<GradObstacleInfo>().set<Position>().set<Size>().build();
-    static int q = World::createQuery(mask);
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+    bool fouled = false;
+    forEachGradObstacleWithSize([&](Entity e) {
+        if (fouled) return;
         auto& info = e.get<GradObstacleInfo>();
-        if (info.rowGap != rowGap) continue;
+        if (info.rowGap != rowGap) return;
 
         const auto& op = e.get<Position>();
         const auto& os = e.get<Size>();
 
         if (!verticalOverlap(sy, sh, op.y, os.h)) {
             info.contactFouled = false;
-            continue;
+            return;
         }
 
-        pushStudentOutsideObstacle(gs, sy, sw, sh, op.x, op.y, os.w, os.h, info.dir);
+        pushStudentOutsideObstacle(gs, sy, sw, sh, op.x, op.y, os.w, os.h);
 
         if (!obstaclePushContact(gs.gradStudentX, sy, sw, sh,
                                  op.x, op.y, os.w, os.h, info.dir)) {
             info.contactFouled = false;
-            continue;
+            return;
         }
 
         gs.gradBeingDragged = true;
@@ -346,10 +343,11 @@ static void applyObstacleDrag(float dt) {
             if (!info.contactFouled) {
                 info.contactFouled = true;
                 onGraduationFoul();
-                return;
+                fouled = true;
             }
         }
-    }
+    });
+    if (fouled) return;
 
     resolveStudentAgainstObstacles(sy, sw, sh, gs.gradNextChair);
 }
@@ -361,10 +359,7 @@ static void updateObstacles(float dt) {
     const float minX = left + halfW;
     const float maxX = right - halfW;
 
-    static const Mask mask = MaskBuilder()
-        .set<GradObstacleTag>().set<GradObstacleInfo>().set<Position>().build();
-    static int q = World::createQuery(mask);
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+    forEachGradObstacle([&](Entity e) {
         auto& info = e.get<GradObstacleInfo>();
         auto& pos = e.get<Position>();
 
@@ -377,23 +372,23 @@ static void updateObstacles(float dt) {
             info.dir = -1.0f;
         }
         pos.y = Config::graduationObstacleY(info.rowGap);
-    }
+    });
 }
 
 static void syncChairVisibility() {
     GameState& gs = gameState();
     const int hideChair = (gs.gradAnimStep == 1) ? gs.gradActiveChair : -1;
-    static const Mask mask = MaskBuilder().set<GradChairTag>().set<GradChairInfo>().build();
-    static int q = World::createQuery(mask);
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<GradChairTag>() || !e.has<GradChairInfo>()) continue;
         auto& info = e.get<GradChairInfo>();
         info.hidden = (hideChair >= 0 && info.index == hideChair);
     }
 }
 
 static bool studentTouchesStage() {
-    Entity student = gradStudent();
-    if (student.eof()) return false;
+    Entity student{ent_type{-1}};
+    if (!gradStudent(student)) return false;
 
     const auto& p = student.get<Position>();
     const auto& s = student.get<Size>();
@@ -410,10 +405,10 @@ static void finishGraduation() {
     gs.started = false;
 }
 
-static void syncStudentVisual() {
+static bool syncStudentVisual() {
     GameState& gs = gameState();
-    Entity student = gradStudent();
-    if (student.eof()) return;
+    Entity student{ent_type{-1}};
+    if (!gradStudent(student)) return false;
 
     const int pathRows = Config::graduationPathRows();
 
@@ -467,7 +462,12 @@ static void syncStudentVisual() {
     if (student.has<PhysicsBody>())
         phys::setPosition(student.entity(), sx, sy);
 
-    if (studentTouchesStage())
+    return studentTouchesStage();
+}
+
+static void commitGraduationFrame() {
+    syncChairVisibility();
+    if (syncStudentVisual())
         finishGraduation();
 }
 
@@ -484,15 +484,15 @@ void graduationOnYear5Expired() {
     onGraduationYear5Expired();
 }
 
+void graduationOnLivesDepleted() {
+    GameState& gs = gameState();
+    if (gs.phase != Phase::GRADUATION) return;
+    endGraduationLost(gs);
+}
+
 void enterGraduationStage() {
     GameState& gs = gameState();
-    flushDeadEntities();
-
-    const int needChairs = Config::graduationChairTotal();
-    const bool worldReady = hasGradStageEntity()
-        && countGradChairEntities() >= needChairs
-        && countGradObstacleEntities() >= Config::graduationObstacleRowGapCount();
-    if (gs.gradInitialized && worldReady) return;
+    deadCleanupSystem();
 
     if (!gs.gradInitialized) {
         markTagDead<BallTag>();
@@ -500,21 +500,20 @@ void enterGraduationStage() {
         markTagDead<DropTag>();
         markTagDead<ProjectileTag>();
         markTagDead<HazardTag>();
+        deadCleanupSystem();
 
-        static const Mask paddleMask = MaskBuilder()
-            .set<PaddleTag>()
-            .set<Position>()
-            .set<SpritePart>()
-            .build();
-        static int paddleQ = World::createQuery(paddleMask);
-        Entity paddle = World::first(paddleQ);
-        if (!World::eof(paddleQ)) {
-            paddle.add(GradStudentTag{});
-            paddle.get<SpritePart>() = sprites::makePart(sprites::Id::GRAD_STUDENT_IDLE);
-            paddle.get<Size>() = {Config::GRAD_STUDENT_W, Config::GRAD_STUDENT_H};
-            paddle.get<Position>() = {Config::WORLD_W * 0.5f, Config::graduationStudentStartY()};
-            phys::setPosition(paddle.entity(), Config::WORLD_W * 0.5f, Config::graduationStudentStartY());
-            phys::setVelocity(paddle.entity(), 0.0f, 0.0f);
+        for (Entity e = Entity::first(); !e.eof(); e.next()) {
+            if (e.mask().ctz() < 0) continue;
+            if (!e.has<PaddleTag>() || !e.has<Position>() || !e.has<SpritePart>()) continue;
+            e.add(GradStudentTag{});
+            e.get<SpritePart>() = sprites::makePart(sprites::Id::GRAD_STUDENT_IDLE);
+            e.get<Size>() = {Config::GRAD_STUDENT_W, Config::GRAD_STUDENT_H};
+            e.get<Position>() = {Config::WORLD_W * 0.5f, Config::graduationStudentStartY()};
+            if (e.has<PhysicsBody>()) {
+                phys::setPosition(e.entity(), Config::WORLD_W * 0.5f, Config::graduationStudentStartY());
+                phys::setVelocity(e.entity(), 0.0f, 0.0f);
+            }
+            break;
         }
 
         gs.gradFouls = 0;
@@ -524,19 +523,16 @@ void enterGraduationStage() {
         resetGraduationProgress();
     }
 
-    if (!hasGradStageEntity())
-        spawnGradStageBackground();
-
-    gs.gradChairTotal = needChairs;
+    gs.gradChairTotal = Config::graduationChairTotal();
     spawnMissingGradChairs();
+    unhideAllGradChairs();
 
     if (countGradObstacleEntities() < Config::graduationObstacleRowGapCount())
         spawnGraduationObstacles();
 
     gs.gradInitialized = true;
     gs.started = true;
-    syncChairVisibility();
-    syncStudentVisual();
+    commitGraduationFrame();
 }
 
 void graduationInputSystem(SDL_Renderer* r) {
@@ -580,8 +576,6 @@ void graduationOnMouseDown(SDL_Renderer* r) {
 
     const int targetChair = Config::graduationNearestChairInRow(
         gs.gradNextChair, sx);
-    if (jumpBlockedByObstacle(sx, gs.gradNextChair))
-        return;
 
     gs.gradJumpStartX = sx;
     gs.gradJumpStartY = idleStudentY(gs.gradNextChair, sx);
@@ -591,8 +585,7 @@ void graduationOnMouseDown(SDL_Renderer* r) {
     gs.gradActiveChair = targetChair;
     gs.gradAnimStep = 1;
     gs.gradAnimTimer = 0.0f;
-    syncChairVisibility();
-    syncStudentVisual();
+    commitGraduationFrame();
 }
 
 void graduationOnSpace() {
@@ -602,27 +595,24 @@ void graduationOnSpace() {
     gs.gradAwaitingSpace = false;
     gs.started = true;
     resetGraduationProgress();
-    syncChairVisibility();
-    syncStudentVisual();
+    commitGraduationFrame();
 }
 
 void graduationSystem(float dt) {
     GameState& gs = gameState();
     if (gs.phase != Phase::GRADUATION) return;
 
-    if (!gs.gradInitialized)
+    if (!gs.gradInitialized || !allGradChairSlotsFilled())
         enterGraduationStage();
 
     if (gs.gradAwaitingSpace) {
-        syncChairVisibility();
-        syncStudentVisual();
+        commitGraduationFrame();
         return;
     }
 
     updateObstacles(dt);
     applyObstacleDrag(dt);
-    syncChairVisibility();
-    syncStudentVisual();
+    commitGraduationFrame();
     if (gs.phase != Phase::GRADUATION) return;
 
     if (gs.gradAnimStep == 0) return;
@@ -632,8 +622,7 @@ void graduationSystem(float dt) {
         if (gs.gradAnimTimer < Config::GRAD_VAULT_DURATION) return;
         gs.gradAnimStep = 2;
         gs.gradAnimTimer = 0.0f;
-        syncChairVisibility();
-        syncStudentVisual();
+        commitGraduationFrame();
         return;
     }
 
@@ -650,6 +639,5 @@ void graduationSystem(float dt) {
     gs.gradAnimTimer = 0.0f;
     gs.gradActiveChair = -1;
 
-    syncChairVisibility();
-    syncStudentVisual();
+    commitGraduationFrame();
 }

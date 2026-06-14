@@ -68,8 +68,6 @@ static void drawTaxDrop(SDL_Renderer* r, float cx, float cy, float half) {
 }
 
 static void drawEntity(SDL_Renderer* r, Entity e) {
-    if (e.has<GradStageTag>()) return;
-
     if (e.has<GradChairTag>() && e.has<GradChairInfo>()) {
         if (e.get<GradChairInfo>().hidden) return;
     }
@@ -89,9 +87,7 @@ static void drawEntity(SDL_Renderer* r, Entity e) {
 
     if (e.has<SpritePart>()) {
         if (!sprites::ready()) return;
-        SpritePart sp = e.get<SpritePart>();
-        if (e.has<BrickTag>() && e.has<BrickInfo>() && e.has<BrickProgress>())
-            sp = brickSpritePart(e);
+        const SpritePart sp = e.get<SpritePart>();
         const SDL_FRect dest = spriteDest(e, p.x, drawY, s.w, s.h, sp);
         sprites::drawPart(r, sp, dest);
         if (e.has<BrickProgress>()) {
@@ -129,20 +125,16 @@ void renderSystem(SDL_Renderer* r) {
         sprites::drawGraduationStage(r);
     }
 
-    static const Mask mask = MaskBuilder()
-        .set<Position>()
-        .set<Size>()
-        .set<Drawable>()
-        .build();
-    static int q = World::createQuery(mask);
-
-    // Graduation student always draws last so the stage never covers them (incl. on WON).
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<Position>() || !e.has<Size>() || !e.has<Drawable>()) continue;
         if (e.has<GradStudentTag>()) continue;
         drawEntity(r, e);
     }
 
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+    for (Entity e = Entity::first(); !e.eof(); e.next()) {
+        if (e.mask().ctz() < 0) continue;
+        if (!e.has<Position>() || !e.has<Size>() || !e.has<Drawable>()) continue;
         if (!e.has<GradStudentTag>()) continue;
         drawEntity(r, e);
     }

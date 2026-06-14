@@ -79,12 +79,11 @@ struct ProjectileTag{};
 struct HazardTag    {};
 struct GradChairTag {};
 struct GradStudentTag {};
-struct GradStageTag {};
 struct GradObstacleTag {};
 struct GameStateTag {};
 struct DeadTag      {};   // marks entity for deletion by deadCleanupSystem
 
-struct GradChairInfo { int index; bool cleared; bool hidden; };
+struct GradChairInfo { int index; bool hidden; };
 struct GradObstacleInfo { int rowGap; float dir; bool contactFouled; };
 
 // ---- Storage customization ----
@@ -102,7 +101,6 @@ namespace bagel {
     template<> struct Storage<HazardTag>     final : NoInstance { using type = TaggedStorage<HazardTag>; };
     template<> struct Storage<GradChairTag>  final : NoInstance { using type = TaggedStorage<GradChairTag>; };
     template<> struct Storage<GradStudentTag> final : NoInstance { using type = TaggedStorage<GradStudentTag>; };
-    template<> struct Storage<GradStageTag>   final : NoInstance { using type = TaggedStorage<GradStageTag>; };
     template<> struct Storage<GradObstacleTag> final : NoInstance { using type = TaggedStorage<GradObstacleTag>; };
     template<> struct Storage<GameStateTag>  final : NoInstance { using type = TaggedStorage<GameStateTag>; };
     template<> struct Storage<DeadTag>       final : NoInstance { using type = TaggedStorage<DeadTag>; };

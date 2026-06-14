@@ -30,6 +30,7 @@ add_executable(SurviveTheSemester
         src/systems/endgame.cpp
         src/systems/year.cpp
         src/systems/graduation.cpp
+        src/systems/cleanup.cpp
 )
 target_include_directories(SurviveTheSemester PRIVATE
         ${PROJECT_SOURCE_DIR}
@@ -90,6 +91,7 @@ add_executable(graduation_year_tests
         src/GameStateAccess.cpp
         src/systems/year.cpp
         src/systems/graduation.cpp
+        src/systems/cleanup.cpp
         src/EntityFactory.cpp
         src/Physics.cpp
         src/Sprites.cpp

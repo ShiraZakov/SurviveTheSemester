@@ -147,7 +147,7 @@ static void test_year5_expired_restores_hidden_chair() {
     assert(!anyGradChairHidden());
 }
 
-static void test_enter_graduation_spawns_stage_and_all_chairs() {
+static void test_enter_graduation_spawns_all_chairs() {
     resetWorld();
     sprites::initCatalog();
     Entity gsEnt = spawnGameState();
@@ -157,17 +157,17 @@ static void test_enter_graduation_spawns_stage_and_all_chairs() {
 
     enterGraduationStage();
 
-    int stageCount = 0;
     int chairCount = 0;
+    int obstacleCount = 0;
     for (Entity e = Entity::first(); !e.eof(); e.next()) {
         if (e.mask().ctz() < 0) continue;
-        if (e.has<GradStageTag>()) ++stageCount;
         if (e.has<GradChairTag>()) ++chairCount;
+        if (e.has<GradObstacleTag>()) ++obstacleCount;
     }
 
     assert(gs.gradInitialized);
-    assert(stageCount == 1);
     assert(chairCount == Config::graduationChairTotal());
+    assert(obstacleCount == Config::graduationObstacleRowGapCount());
     resetWorld();
 }
 
@@ -178,7 +178,7 @@ int main() {
     test_graduation_year_advances_before_year5();
     test_lost_mid_vault_restores_all_chairs();
     test_year5_expired_restores_hidden_chair();
-    test_enter_graduation_spawns_stage_and_all_chairs();
+    test_enter_graduation_spawns_all_chairs();
     std::printf("All %d graduation year tests passed.\n", 7);
     return 0;
 }

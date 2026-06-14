@@ -40,21 +40,6 @@ void eventCleanupSystem() {
     for (int i = 0; i < dead.size(); ++i) Entity(dead[i]).destroy();
 }
 
-/// @brief Destroys all entities tagged DeadTag, including their Box2D bodies.
-/// @return void
-void deadCleanupSystem() {
-    static const Mask mask = MaskBuilder().set<DeadTag>().build();
-    static int q = World::createQuery(mask);
-
-    bagel::Bag<ent_type, 64> dead;
-    for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
-        dead.push(e.entity());
-    for (int i = 0; i < dead.size(); ++i) {
-        phys::destroyBody(dead[i]);
-        Entity(dead[i]).destroy();
-    }
-}
-
 static void clearAll() {
     bagel::Bag<ent_type, 256> all;
     for (Entity e = Entity::first(); !e.eof(); e.next())
@@ -169,7 +154,8 @@ void SurviveGame::onKeyDown(int sc) {
 }
 
 void SurviveGame::onMouseDown(int button) {
-    if (button == SDL_BUTTON_LEFT)
+    if (button != SDL_BUTTON_LEFT) return;
+    if (gameState().phase == Phase::GRADUATION)
         graduationOnMouseDown(_renderer);
 }
 
@@ -196,10 +182,6 @@ void SurviveGame::tick(const bool* keys, float dt) {
             graduationInputSystem(_renderer);
         graduationSystem(dt);
         gameStateSystem();
-        if (gs.phase == Phase::GRADUATION && gs.lives <= 0) {
-            gs.phase = Phase::LOST;
-            gs.started = false;
-        }
         yearSystem(dt);
         eventCleanupSystem();
         deadCleanupSystem();
