@@ -63,44 +63,6 @@ static bool verticalOverlap(float ay, float ah, float by, float bh) {
         && ay - ah * 0.5f < by + bh * 0.5f;
 }
 
-static bool boxesOverlap(float ax, float ay, float aw, float ah,
-                         float bx, float by, float bw, float bh) {
-    return verticalOverlap(ay, ah, by, bh)
-        && ax + aw * 0.5f > bx - bw * 0.5f
-        && ax - aw * 0.5f < bx + bw * 0.5f;
-}
-
-static bool obstaclePushContact(float sx, float sy, float sw, float sh,
-                                float ox, float oy, float ow, float oh, float dir) {
-    if (!verticalOverlap(sy, sh, oy, oh)) return false;
-
-    constexpr float pad = 0.08f;
-    if (dir > 0.0f) {
-        const float blockRight = ox + ow * 0.5f;
-        const float studentLeft = sx - sw * 0.5f;
-        const float gap = studentLeft - blockRight;
-        return gap <= pad && gap >= -pad;
-    }
-    const float blockLeft = ox - ow * 0.5f;
-    const float studentRight = sx + sw * 0.5f;
-    const float gap = blockLeft - studentRight;
-    return gap <= pad && gap >= -pad;
-}
-
-static void pushStudentOutsideObstacle(GameState& gs, float sy, float sw, float sh,
-                                       float ox, float oy, float ow, float oh) {
-    if (!verticalOverlap(sy, sh, oy, oh)) return;
-    if (!boxesOverlap(gs.gradStudentX, sy, sw, sh, ox, oy, ow, oh)) return;
-
-    const float leftPos = ox - (ow + sw) * 0.5f - 0.03f;
-    const float rightPos = ox + (ow + sw) * 0.5f + 0.03f;
-    const float distLeft = gs.gradStudentX > leftPos
-        ? gs.gradStudentX - leftPos : leftPos - gs.gradStudentX;
-    const float distRight = gs.gradStudentX > rightPos
-        ? gs.gradStudentX - rightPos : rightPos - gs.gradStudentX;
-    gs.gradStudentX = distLeft <= distRight ? leftPos : rightPos;
-}
-
 static bool horizontalOverlap(float ax, float aw, float bx, float bw) {
     return ax + aw * 0.5f > bx - bw * 0.5f
         && ax - aw * 0.5f < bx + bw * 0.5f;
@@ -166,29 +128,11 @@ static void resetObstacleContactFlags() {
     });
 }
 
-static void spawnGraduationObstacles() {
-    float rowLeft = 0.0f, rowRight = 0.0f;
-    Config::graduationChairRowSpan(rowLeft, rowRight);
-    const float obHalf = Config::GRAD_OBSTACLE_W * 0.5f;
-    spawnGradObstacle(rowLeft + obHalf + 0.25f, 0, 1.0f);
-    spawnGradObstacle(rowRight - obHalf - 0.25f, 1, -1.0f);
-}
-
 static int countGradChairEntities() {
     int count = 0;
     for (Entity e = Entity::first(); !e.eof(); e.next()) {
         if (e.mask().ctz() < 0) continue;
         if (!e.has<GradChairTag>()) continue;
-        ++count;
-    }
-    return count;
-}
-
-static int countGradObstacleEntities() {
-    int count = 0;
-    for (Entity e = Entity::first(); !e.eof(); e.next()) {
-        if (e.mask().ctz() < 0) continue;
-        if (!e.has<GradObstacleTag>()) continue;
         ++count;
     }
     return count;
@@ -258,24 +202,6 @@ static void endGraduationLost(GameState& gs) {
     gs.started = false;
 }
 
-static void onGraduationFoul() {
-    GameState& gs = gameState();
-    if (gs.gradAwaitingSpace) return;
-
-    ++gs.gradFouls;
-    gs.lives -= 1;
-    gs.gradBeingDragged = false;
-
-    if (gs.lives <= 0) {
-        graduationOnLivesDepleted();
-        return;
-    }
-
-    gs.gradAwaitingSpace = true;
-    gs.started = false;
-    resetGraduationProgress();
-}
-
 static void resetGraduationProgress() {
     GameState& gs = gameState();
 
@@ -287,92 +213,6 @@ static void resetGraduationProgress() {
     gs.gradNextChair = 0;
     gs.gradStudentX = Config::clampGradStudentX(
         Config::WORLD_W * 0.5f, Config::GRAD_STUDENT_W * 0.5f);
-}
-
-static void applyObstacleDrag(float dt) {
-    GameState& gs = gameState();
-    gs.gradBeingDragged = false;
-    if (gs.gradAnimStep != 0 || gs.gradAwaitingSpace) return;
-    if (gs.gradNextChair <= 0) return;
-
-    const int rowGap = gs.gradNextChair - 1;
-    const float sy = idleStudentY(gs.gradNextChair, gs.gradStudentX);
-    const float sw = Config::GRAD_STUDENT_W;
-    const float sh = Config::GRAD_STUDENT_H;
-    const float halfW = sw * 0.5f;
-
-    float rowLeft = 0.0f, rowRight = 0.0f;
-    Config::graduationChairRowSpan(rowLeft, rowRight);
-    const float minX = rowLeft + halfW;
-    const float maxX = rowRight - halfW;
-    constexpr float edgeEps = 0.04f;
-
-    bool fouled = false;
-    forEachGradObstacleWithSize([&](Entity e) {
-        if (fouled) return;
-        auto& info = e.get<GradObstacleInfo>();
-        if (info.rowGap != rowGap) return;
-
-        const auto& op = e.get<Position>();
-        const auto& os = e.get<Size>();
-
-        if (!verticalOverlap(sy, sh, op.y, os.h)) {
-            info.contactFouled = false;
-            return;
-        }
-
-        pushStudentOutsideObstacle(gs, sy, sw, sh, op.x, op.y, os.w, os.h);
-
-        if (!obstaclePushContact(gs.gradStudentX, sy, sw, sh,
-                                 op.x, op.y, os.w, os.h, info.dir)) {
-            info.contactFouled = false;
-            return;
-        }
-
-        gs.gradBeingDragged = true;
-
-        if (info.dir > 0.0f)
-            gs.gradStudentX = std::max(gs.gradStudentX, op.x + (os.w + sw) * 0.5f + 0.03f);
-        else
-            gs.gradStudentX = std::min(gs.gradStudentX, op.x - (os.w + sw) * 0.5f - 0.03f);
-
-        gs.gradStudentX += info.dir * Config::GRAD_OBSTACLE_SPEED * dt;
-        gs.gradStudentX = Config::clampGradStudentX(gs.gradStudentX, halfW);
-
-        if (gs.gradStudentX <= minX + edgeEps || gs.gradStudentX >= maxX - edgeEps) {
-            if (!info.contactFouled) {
-                info.contactFouled = true;
-                onGraduationFoul();
-                fouled = true;
-            }
-        }
-    });
-    if (fouled) return;
-
-    resolveStudentAgainstObstacles(sy, sw, sh, gs.gradNextChair);
-}
-
-static void updateObstacles(float dt) {
-    float left = 0.0f, right = 0.0f;
-    Config::graduationChairRowSpan(left, right);
-    const float halfW = Config::GRAD_OBSTACLE_W * 0.5f;
-    const float minX = left + halfW;
-    const float maxX = right - halfW;
-
-    forEachGradObstacle([&](Entity e) {
-        auto& info = e.get<GradObstacleInfo>();
-        auto& pos = e.get<Position>();
-
-        pos.x += info.dir * Config::GRAD_OBSTACLE_SPEED * dt;
-        if (pos.x <= minX) {
-            pos.x = minX;
-            info.dir = 1.0f;
-        } else if (pos.x >= maxX) {
-            pos.x = maxX;
-            info.dir = -1.0f;
-        }
-        pos.y = Config::graduationObstacleY(info.rowGap);
-    });
 }
 
 static void syncChairVisibility() {
@@ -499,7 +339,6 @@ void enterGraduationStage() {
         markTagDead<BrickTag>();
         markTagDead<DropTag>();
         markTagDead<ProjectileTag>();
-        markTagDead<HazardTag>();
         deadCleanupSystem();
 
         for (Entity e = Entity::first(); !e.eof(); e.next()) {
@@ -526,9 +365,6 @@ void enterGraduationStage() {
     gs.gradChairTotal = Config::graduationChairTotal();
     spawnMissingGradChairs();
     unhideAllGradChairs();
-
-    if (countGradObstacleEntities() < Config::graduationObstacleRowGapCount())
-        spawnGraduationObstacles();
 
     gs.gradInitialized = true;
     gs.started = true;
@@ -610,8 +446,6 @@ void graduationSystem(float dt) {
         return;
     }
 
-    updateObstacles(dt);
-    applyObstacleDrag(dt);
     commitGraduationFrame();
     if (gs.phase != Phase::GRADUATION) return;
 

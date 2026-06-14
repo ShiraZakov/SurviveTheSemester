@@ -28,7 +28,6 @@ void courseProgressSystem();                   // MAY    (consumes CourseHit/Dro
 void hudSystem(SDL_Renderer* r);               // MAY
 
 void examSystem(float dt);                     // YUVAL  (consumes ExamStarted -> ExamFinished)
-void hazardSystem();                           // YUVAL  (consumes HazardTriggered)
 
 void yearSystem(float dt);                     // SHIRA  (year timer + row completion)
 void gameStateSystem();                        // SHIRA  (consumes LifeLost/ExamFinished)

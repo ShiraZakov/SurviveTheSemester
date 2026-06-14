@@ -21,4 +21,4 @@ namespace phys {
 
 // Systems (called by the scheduler in game.cpp).
 void physicsStepSystem(float dt);   // step world + sync Position + hold ball speed
-void contactEventSystem();          // contacts/sensors -> CourseHit/HazardTriggered/DropCaught
+void contactEventSystem();          // contacts/sensors -> CourseHit/DropCaught/ProjectileHit

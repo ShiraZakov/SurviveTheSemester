@@ -22,7 +22,6 @@ struct BrickInfo    { int courseId; int courseIndex; };             // row track
 struct BrickProgress { int filled; int max; bool unlocked; float clearDelay; }; // meter + prereq; clearDelay > 0 = full meter pause before destroy
 struct BrickPrereqMask { uint32_t mustClear; };                      // bit i set => course index i must be cleared first
 struct DropInfo   { int courseId; int courseIndex; DropType type; bagel::ent_type sourceBrick; float gradeValue; };
-struct HazardInfo { int courseId; HazardType type; };              // hazard: source course + kind of hazard
 struct ProjInfo   { int courseId; };                               // exam projectile -> course that fired it
 struct PaddleImpact { float time; };                               // remaining visual bounce time after ball contact
 
@@ -52,8 +51,6 @@ struct GameState {
     // Input state
     float prevMouseWorldX;  // previous frame mouse X for paddle velocity calculation
     bool  hasPrevMouse;     // false until the first mouse sample is taken
-    // Hazard spawn tracking
-    int   lastHazardYear;   // the last year for which a hazard was spawned (0 = none)
     // Graduation stage (stage 2)
     bool  gradInitialized;
     int   gradNextChair;
@@ -67,6 +64,7 @@ struct GameState {
     int   gradFouls;
     bool  gradBeingDragged;
     bool  gradAwaitingSpace;
+    bool  paused = false;   // true while the ESC pause menu is shown
 };
 
 // ---- Tags (empty; checked via has<>(), never get<>()) ----
@@ -76,7 +74,6 @@ struct BrickTag     {};
 struct WallTag      {};
 struct DropTag      {};
 struct ProjectileTag{};
-struct HazardTag    {};
 struct GradChairTag {};
 struct GradStudentTag {};
 struct GradObstacleTag {};
@@ -98,7 +95,6 @@ namespace bagel {
     template<> struct Storage<WallTag>       final : NoInstance { using type = TaggedStorage<WallTag>; };
     template<> struct Storage<DropTag>       final : NoInstance { using type = TaggedStorage<DropTag>; };
     template<> struct Storage<ProjectileTag> final : NoInstance { using type = TaggedStorage<ProjectileTag>; };
-    template<> struct Storage<HazardTag>     final : NoInstance { using type = TaggedStorage<HazardTag>; };
     template<> struct Storage<GradChairTag>  final : NoInstance { using type = TaggedStorage<GradChairTag>; };
     template<> struct Storage<GradStudentTag> final : NoInstance { using type = TaggedStorage<GradStudentTag>; };
     template<> struct Storage<GradObstacleTag> final : NoInstance { using type = TaggedStorage<GradObstacleTag>; };

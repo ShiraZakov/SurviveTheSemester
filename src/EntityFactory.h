@@ -13,7 +13,6 @@ bagel::Entity spawnBrick(int courseId, int spriteIndex, float x, float y);
 bagel::Entity spawnDrop(int courseId, int courseIndex, float x, float y, DropType type,
                         bagel::ent_type sourceBrick = {-1}, float gradeValue = 0.0f);
 bagel::Entity spawnProjectile(int courseId, float x, float y, float vx, float vy);
-bagel::Entity spawnHazard(int courseId, float x, float y, HazardType type);
 bagel::Entity spawnGradChair(int index, float x, float y);
 bagel::Entity spawnGradObstacle(float x, int rowGap, float dir);
 bagel::Entity spawnCourse(int id);          // invisible per-course aggregate (Course state)

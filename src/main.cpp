@@ -42,12 +42,13 @@ int main() {
             if (ev.type == SDL_EVENT_QUIT) {
                 running = false;
             } else if (ev.type == SDL_EVENT_KEY_DOWN) {
-                if (ev.key.scancode == SDL_SCANCODE_ESCAPE) running = false;
-                else game.onKeyDown((int)ev.key.scancode);
+                game.onKeyDown((int)ev.key.scancode);
             } else if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                game.onMouseDown((int)ev.button.button);
+                game.onMouseDown((int)ev.button.button,
+                                 (float)ev.button.x, (float)ev.button.y);
             }
         }
+        if (game.wantsQuit()) { running = false; continue; }
 
         Uint64 now = SDL_GetTicks();
         double frame = (now - prev) / 1000.0;
@@ -55,10 +56,14 @@ int main() {
         if (frame > 0.25) frame = 0.25;   // avoid spiral of death
         acc += frame;
 
-        const bool* keys = SDL_GetKeyboardState(nullptr);
-        while (acc >= Config::FIXED_DT) {
-            game.tick(keys, Config::FIXED_DT);
-            acc -= Config::FIXED_DT;
+        if (!game.isPaused()) {
+            const bool* keys = SDL_GetKeyboardState(nullptr);
+            while (acc >= Config::FIXED_DT) {
+                game.tick(keys, Config::FIXED_DT);
+                acc -= Config::FIXED_DT;
+            }
+        } else {
+            acc = 0.0;  // discard accumulated time while paused
         }
 
         game.draw();

@@ -26,7 +26,6 @@ add_executable(SurviveTheSemester
         src/systems/progress.cpp
         src/systems/hud.cpp
         src/systems/exam.cpp
-        src/systems/hazards.cpp
         src/systems/endgame.cpp
         src/systems/year.cpp
         src/systems/graduation.cpp

@@ -27,12 +27,15 @@ void deadCleanupSystem();    // destroys bodies + entities tagged DeadTag
 class SurviveGame {
 public:
     bool init(SDL_Renderer* renderer);
-    void onKeyDown(int scancode);          // SDL_Scancode, passed as int
-    void onMouseDown(int button);          // SDL mouse button
+    void onKeyDown(int scancode);                     // SDL_Scancode, passed as int
+    void onMouseDown(int button, float px, float py); // SDL mouse button + pixel coords
     void tick(const bool* keys, float dt); // one fixed-timestep simulation step
     void draw();                           // render once per frame
     void shutdown();
+    bool isPaused()   const;
+    bool wantsQuit()  const;
 private:
     SDL_Renderer* _renderer = nullptr;
+    bool _wantsQuit = false;
     void setupScene();
 };

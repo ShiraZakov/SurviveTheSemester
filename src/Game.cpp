@@ -125,15 +125,29 @@ static void launchBallAndStart() {
 }
 
 void SurviveGame::onKeyDown(int sc) {
+    GameState& gs = gameState();
+
+    // Handle pause menu keys first
+    if (gs.paused) {
+        if (sc == SDL_SCANCODE_Y) { _wantsQuit = true; }
+        if (sc == SDL_SCANCODE_N) { gs.paused = false; }
+        return;
+    }
+
     switch (sc) {
+        case SDL_SCANCODE_ESCAPE: {
+            if (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM
+                    || gs.phase == Phase::GRADUATION) {
+                gs.paused = true;
+            }
+            break;
+        }
         // Debug-hotkey synthesizer: lets each vertical be exercised solo.
         case SDL_SCANCODE_H: ev::courseHit(0, {-1});                 break;
         case SDL_SCANCODE_J: ev::dropCaught(0, 0, DropType::Assignment, {-1}); break;
         case SDL_SCANCODE_E: ev::examStarted(0);                     break;
-        case SDL_SCANCODE_K: ev::hazardTriggered(0, HazardType::LoseLife); break;
         case SDL_SCANCODE_L: ev::lifeLost(1);                        break;
         case SDL_SCANCODE_SPACE: {
-            GameState& gs = gameState();
             if (gs.phase == Phase::GRADUATION && gs.gradAwaitingSpace) {
                 graduationOnSpace();
                 break;
@@ -153,9 +167,32 @@ void SurviveGame::onKeyDown(int sc) {
     }
 }
 
-void SurviveGame::onMouseDown(int button) {
+bool SurviveGame::isPaused() const {
+    return gameState().paused;
+}
+
+bool SurviveGame::wantsQuit() const {
+    return _wantsQuit;
+}
+
+void SurviveGame::onMouseDown(int button, float px, float py) {
     if (button != SDL_BUTTON_LEFT) return;
-    if (gameState().phase == Phase::GRADUATION)
+    GameState& gs = gameState();
+
+    if (gs.paused) {
+        // YES button region (centered ~35% from left)
+        constexpr float btnY  = Config::WINDOW_H * 0.60f;
+        constexpr float yesCX = Config::WINDOW_W * 0.5f - 120.0f;
+        constexpr float noCX  = Config::WINDOW_W * 0.5f + 120.0f;
+        constexpr float hw = 80.0f, hh = 22.0f;
+        if (px >= yesCX - hw && px <= yesCX + hw && py >= btnY - hh && py <= btnY + hh)
+            _wantsQuit = true;
+        else if (px >= noCX - hw && px <= noCX + hw && py >= btnY - hh && py <= btnY + hh)
+            gs.paused = false;
+        return;
+    }
+
+    if (gs.phase == Phase::GRADUATION)
         graduationOnMouseDown(_renderer);
 }
 
@@ -172,7 +209,6 @@ void SurviveGame::tick(const bool* keys, float dt) {
         brickUnlockSystem();
         courseProgressSystem();
         examSystem(dt);
-        hazardSystem();
         yearSystem(dt);
         gameStateSystem();
         eventCleanupSystem();
