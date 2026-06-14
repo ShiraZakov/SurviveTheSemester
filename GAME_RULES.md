@@ -1,26 +1,30 @@
 # Survive the Semester — Game Rules
 
+> **Note:** This document describes the current implemented mechanics.
+> A full detailed rules document will be written by Shira.
+
+---
+
 ## Objective
 
 Clear all 21 courses across 5 academic years before running out of lives or failing your average.
 Each course is represented by a brick on the field. Hit bricks with the ball, catch assignment drops
-with the paddle, survive exams, and avoid academic hazards to graduate.
+with the paddle, survive exams, and graduate.
 
 ---
 
 ## The Field
 
-- A paddle at the bottom of the screen, controlled with the **mouse** or **A/D arrow keys**.
+- A paddle at the bottom of the screen, controlled with the **mouse** or **A/D / arrow keys**.
 - A ball that bounces off walls, the paddle, and bricks.
 - 21 course bricks arranged in a 7×3 grid, grouped by academic year.
 - Drops falling from cleared bricks that must be caught with the paddle.
-- Academic hazards scattered across the field.
 
 ---
 
 ## Academic Years
 
-The game is divided into **5 academic years**. Each year has a **30-second timer**.
+The game is divided into **5 academic years**. Each year has a **45-second timer**.
 
 | Year | Courses |
 |------|---------|
@@ -30,7 +34,7 @@ The game is divided into **5 academic years**. Each year has a **30-second timer
 | Year 4 | Courses 13–16 |
 | Year 5 | Courses 17–21 (including the Final Project) |
 
-- The year advances automatically when all its courses are cleared **or** the 30-second timer expires.
+- The year advances automatically when all its courses are cleared **or** the 45-second timer expires.
 - If Year 5 ends without clearing everything, the game is lost.
 
 ---
@@ -87,7 +91,7 @@ Three types of drops fall from bricks and must be caught with the paddle.
 ## Scoring & Average Grade
 
 - You start with an average of **100.0**.
-- Your average is updated after each exam based on the grade received.
+- Your average is updated after each exam based on the grade received, weighted by course credits.
 - Penalties:
   - **−10 points** per life lost
   - **−5 points** per Tax drop missed
@@ -99,29 +103,41 @@ Three types of drops fall from bricks and must be caught with the paddle.
 ## Lives
 
 - You start with **3 lives** (shown as pips in the HUD).
-- You lose a life when:
-  - The ball falls below the paddle
-  - An **Academic Hazard** of type `LoseLife` is triggered
+- You lose a life when the ball falls below the paddle.
 - When lives reach 0, the game is lost.
 
 ---
 
 ## Academic Hazards
 
-Starting from **Year 2**, one hazard entity spawns at the beginning of each new year.
-It appears at a random position in the middle third of the field and is triggered when the ball passes through it.
+*(Partially implemented — spawn logic active, full effects pending — Yuval)*
+
+Starting from **Year 2**, one hazard entity spawns per year in the middle third of the field.
+Triggered when the ball passes through it.
 
 | Hazard Type | Effect |
 |-------------|--------|
 | `LoseLife` | Lose 1 life immediately |
-| `ReduceProgress` | The target course loses 25% of its progress *(not yet active)* |
+| `ReduceProgress` | Target course loses 25% of its progress *(not yet active)* |
+
+---
+
+## Graduation Stage
+
+After all 21 courses are cleared, the game transitions to `Phase::GRADUATION`.
+
+- The paddle becomes a **student character**.
+- The player must navigate the student across rows of chairs to reach the graduation stage.
+- **Left click** to jump toward the stage (the student vaults over the nearest chair in the row).
+- Reach the stage to win.
 
 ---
 
 ## Win & Lose Conditions
 
 ### You Win if:
-- All 21 courses are cleared **and** your final average is **≥ 60**.
+- All 21 courses are cleared **and** your final average is **≥ 60**
+- **and** the student successfully reaches the graduation stage.
 
 ### You Lose if:
 - Lives reach **0**
@@ -130,15 +146,29 @@ It appears at a random position in the middle third of the field and is triggere
 
 ---
 
+## Pause Menu
+
+- Press **ESC** at any time during PLAYING, EXAM, or GRADUATION to pause.
+- A pause overlay appears asking: *"Do you want to quit?"*
+- Press **Y** or click **[Y] Yes** to exit the game.
+- Press **N** or click **[N] No** to resume.
+- The elapsed timer is **frozen** while paused.
+
+---
+
 ## Controls
 
 | Input | Action |
 |-------|--------|
-| Mouse move | Move paddle |
+| Mouse move | Move paddle / control student |
 | A / ← | Move paddle left |
 | D / → | Move paddle right |
-| Space | Launch ball from paddle |
-| Escape / Q | Quit game |
+| Space | Launch ball / confirm action |
+| Left click | Jump (Graduation stage) |
+| ESC | Pause game |
+| Y | Quit (while paused) |
+| N | Resume (while paused) |
+| R | Reset scene |
 
 ---
 
@@ -148,8 +178,9 @@ It appears at a random position in the middle third of the field and is triggere
 |---------|----------|-------------|
 | Lives pips | Top-left | Remaining lives (max 3) |
 | Year badge | Top-center | Current academic year |
-| Year timer bar | Top-center | 5-segment countdown (30s per year) |
+| Year timer bar | Top-center | 5-segment countdown (45s per year) |
 | Academic month | Top-center | Oct → Jul progression |
 | Average grade | Status line | Running weighted average |
-| Phase indicator | Status line | PLAYING / EXAM / WON / LOST |
-| Win/Lose overlay | Center | Final result screen |
+| Phase indicator | Status line | PLAYING / EXAM / GRADUATION / WON / LOST |
+| Elapsed timer | Top-right | Total play time since launch (`Time: M:SS`) — pauses with ESC |
+| Win/Lose overlay | Center | Final result screen with average and reset prompt |

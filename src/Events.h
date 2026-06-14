@@ -17,7 +17,6 @@ struct DropCaught    { int courseId; int courseIndex; DropType type; bagel::ent_
 struct BrickCleared  { int courseId; int courseIndex; };
 struct ExamStarted   { int courseId; };                             // startExam
 struct ExamFinished  { int courseId; bool passed; float grade; };   // finishExam
-struct HazardTriggered { int courseId; HazardType type; };
 struct LifeLost      { int amount; };
 struct TaxMissed     { int courseIndex; };
 struct ProjectileHit { int courseId; };   // exam projectile reached the paddle
@@ -48,9 +47,6 @@ namespace ev {
     }
     inline void examFinished(int courseId, bool passed, float grade) {
         bagel::Entity::create().addAll(ExamFinished{courseId, passed, grade}, EventTag{});
-    }
-    inline void hazardTriggered(int courseId, HazardType type) {
-        bagel::Entity::create().addAll(HazardTriggered{courseId, type}, EventTag{});
     }
     inline void lifeLost(int amount) {
         bagel::Entity::create().addAll(LifeLost{amount}, EventTag{});

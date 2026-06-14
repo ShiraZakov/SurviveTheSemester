@@ -126,15 +126,6 @@ Entity spawnProjectile(int courseId, float x, float y, float vx, float vy) {
     return e;
 }
 
-Entity spawnHazard(int courseId, float x, float y, HazardType type) {
-    Entity e = Entity::create();
-    b2BodyId body = makeBody(e.entity(), b2_staticBody, x, y);
-    addBox(body, 0.5f, 0.5f, true, false, true);  // sensor: ball passes through, sensorEv fires
-    e.addAll(Position{x, y}, Size{0.5f, 0.5f},
-             Drawable{0.70f, 0.20f, 0.70f, 1.0f, Shape::Rect}, PhysicsBody{body}, HazardInfo{courseId, type}, HazardTag{});
-    return e;
-}
-
 Entity spawnGradChair(int index, float x, float y) {
     Entity e = Entity::create();
     e.addAll(Position{x, y}, Size{Config::GRAD_CHAIR_W, Config::GRAD_CHAIR_H},
@@ -165,7 +156,7 @@ Entity spawnGameState() {
     GameState gs{
         Config::START_LIVES, Config::START_AVERAGE, Phase::PLAYING, -1, 0, Config::COURSES,
         {}, 1, 0.0f, 0.0f, false, false,
-        0.0f, 0.0f, 0, 0, 0.0f, false, 0,
+        0.0f, 0.0f, 0, 0, 0.0f, false,
         false, 0, 0, 0, 0.0f, Config::WORLD_W * 0.5f, Config::WORLD_W * 0.5f,
         Config::graduationStudentStartY(), -1,
         0, false, false};

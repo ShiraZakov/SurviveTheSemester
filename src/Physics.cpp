@@ -142,7 +142,6 @@ static void onContactPair(ent_type a, ent_type b) {
     }
     else if (other.has<PaddleTag>())
         ev::paddleHit(ball.entity(), other.entity());
-    // hazards are sensors — handled in onSensorPair
 }
 
 static void onSensorPair(ent_type sensor, ent_type visitor) {
@@ -171,19 +170,10 @@ static void onSensorPair(ent_type sensor, ent_type visitor) {
         return;
     }
 
-    // Hazard triggered by ball passing through
-    if (s.has<HazardTag>() && s.has<HazardInfo>() && v.has<BallTag>()) {
-        ev::hazardTriggered(s.get<HazardInfo>().courseId, s.get<HazardInfo>().type);
-        return;
-    }
-    // visitor/sensor roles can be swapped by Box2D — check both orientations
-    if (v.has<HazardTag>() && v.has<HazardInfo>() && s.has<BallTag>()) {
-        ev::hazardTriggered(v.get<HazardInfo>().courseId, v.get<HazardInfo>().type);
-    }
 }
 
 /// @brief Reads Box2D contact and sensor events for the current step and emits
-///        ECS event entities (CourseHit, PaddleHit, HazardTriggered, DropCaught).
+///        ECS event entities (CourseHit, PaddleHit, DropCaught, ProjectileHit).
 /// @return void
 void contactEventSystem() {
     if (!b2World_IsValid(g_world)) return;

@@ -185,4 +185,66 @@ void hudSystem(SDL_Renderer* r) {
             end);
         SDL_SetRenderScale(r, 1.0f, 1.0f);
     }
+
+    // Elapsed timer — top-right corner, visible once game has started
+    if (gs.started || gs.phase == Phase::WON || gs.phase == Phase::LOST) {
+        const int totalSecs = static_cast<int>(gs.totalTime);
+        const int mins = totalSecs / 60;
+        const int secs = totalSecs % 60;
+        char timeBuf[32];
+        std::snprintf(timeBuf, sizeof timeBuf, "Time: %d:%02d", mins, secs);
+        constexpr float scale = 1.4f;
+        const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+            * static_cast<float>(std::strlen(timeBuf));
+        const float drawX = (static_cast<float>(Config::WINDOW_W) - textW - 8.0f) / scale;
+        SDL_SetRenderDrawColorFloat(r, 0.85f, 0.92f, 1.0f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r, drawX, 8.0f / scale, timeBuf);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+    }
+
+    // Pause overlay
+    if (gs.paused) {
+        const float W = static_cast<float>(Config::WINDOW_W);
+        const float H = static_cast<float>(Config::WINDOW_H);
+
+        // Dim background
+        SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColorFloat(r, 0.0f, 0.0f, 0.0f, 0.65f);
+        SDL_FRect overlay{0.0f, 0.0f, W, H};
+        SDL_RenderFillRect(r, &overlay);
+        SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_NONE);
+
+        constexpr float scale = 3.0f;
+        const char* title = "Game Paused";
+        float tw = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale * static_cast<float>(std::strlen(title));
+        SDL_SetRenderDrawColorFloat(r, 1.0f, 1.0f, 1.0f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r, (W * 0.5f - tw * 0.5f) / scale, H * 0.42f / scale, title);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+
+        constexpr float scaleQ = 1.8f;
+        const char* question = "Do you want to quit?";
+        float qw = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scaleQ * static_cast<float>(std::strlen(question));
+        SDL_SetRenderDrawColorFloat(r, 0.85f, 0.85f, 0.85f, 1.0f);
+        SDL_SetRenderScale(r, scaleQ, scaleQ);
+        SDL_RenderDebugText(r, (W * 0.5f - qw * 0.5f) / scaleQ, H * 0.52f / scaleQ, question);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+
+        // YES button
+        constexpr float btnScale = 2.2f;
+        constexpr float btnY  = Config::WINDOW_H * 0.60f;
+        const float yesCX = W * 0.5f - 120.0f;
+        const float noCX  = W * 0.5f + 120.0f;
+        const char* yesLabel = "[Y] Yes";
+        const char* noLabel  = "[N] No";
+        float yw = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * btnScale * static_cast<float>(std::strlen(yesLabel));
+        float nw = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * btnScale * static_cast<float>(std::strlen(noLabel));
+        SDL_SetRenderScale(r, btnScale, btnScale);
+        SDL_SetRenderDrawColorFloat(r, 0.35f, 0.90f, 0.40f, 1.0f);
+        SDL_RenderDebugText(r, (yesCX - yw * 0.5f) / btnScale, btnY / btnScale, yesLabel);
+        SDL_SetRenderDrawColorFloat(r, 0.90f, 0.35f, 0.30f, 1.0f);
+        SDL_RenderDebugText(r, (noCX  - nw * 0.5f) / btnScale, btnY / btnScale, noLabel);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+    }
 }

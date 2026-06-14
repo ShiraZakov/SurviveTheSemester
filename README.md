@@ -38,6 +38,8 @@ See [GAME_RULES.md](GAME_RULES.md) for the full rules.
 **Short version:** clear all 21 course bricks across 5 academic years. Each brick has a progress
 meter filled by ball hits and caught assignment drops. When a course reaches 100%, an exam starts.
 Survive the exam, earn a grade, and keep your average above 60 to graduate.
+Once all courses are cleared, a Graduation stage begins — navigate a student character across
+a chair-filled auditorium to reach the stage.
 
 ---
 
@@ -51,7 +53,7 @@ SurviveTheSemester/
 │   ├── Game.h / Game.cpp         # System scheduler, scene setup, debug hotkeys
 │   ├── Config.h                  # All tunables: sizes, speeds, timers, thresholds
 │   ├── Enums.h                   # Phase, CourseState, DropType, HazardType, Shape
-│   ├── Components.h              # All ECS component and tag structs
+│   ├── Components.h              # All ECS component and tag structs (incl. GameState)
 │   ├── Events.h                  # Event component structs + producer helpers
 │   ├── Physics.h / Physics.cpp   # Box2D wrapper, ball speed regulation, contact→events
 │   ├── EntityFactory.h / .cpp    # spawnX() functions — single source of truth for entities
@@ -65,16 +67,18 @@ SurviveTheSemester/
 │       ├── drops.cpp             # Drop removal, TaxMissed penalty
 │       ├── progress.cpp          # Course progress → ExamStarted trigger
 │       ├── exam.cpp              # Exam phase: timer, projectiles, ExamFinished
-│       ├── hazards.cpp           # Hazard spawning and effect application
-│       ├── hud.cpp               # Lives, year, timer, status line, overlays
+│       ├── hazards.cpp           # Hazard spawning and effect application (Yuval — TODO)
+│       ├── hud.cpp               # Lives, year, elapsed timer, status line, pause overlay
 │       ├── endgame.cpp           # Average calculation, win/lose resolution
+│       ├── graduation.cpp        # Graduation stage: student navigation, chair vaulting
 │       └── year.cpp              # Academic year timer and advancement
 │
 ├── bagel.h                       # BAGEL ECS framework (do not edit)
 ├── lib/                          # SDL3, SDL3_image, Box2D libraries (do not edit)
 ├── res/                          # Game assets (spritesheet, textures)
 ├── tests/
-│   └── test_brick_prereqs.cpp    # Unit tests for prerequisite resolution
+│   ├── test_brick_prereqs.cpp    # Unit tests for prerequisite resolution
+│   └── test_graduation_year.cpp  # Unit tests for graduation + year logic
 │
 ├── CMakeLists.txt
 ├── GAME_RULES.md                 # Full game rules and mechanics
@@ -111,13 +115,35 @@ brickUnlockSystem           ← prerequisite checking
 courseProgressSystem        ← course state, ExamStarted trigger
 examSystem(dt)              ← exam timer, projectiles, ExamFinished
 hazardSystem                ← spawn and apply hazard effects
-yearSystem                  ← year timer and advancement
+yearSystem                  ← year timer, totalTime accumulation, year advancement
 gameStateSystem             ← life/tax/exam → win/lose logic
 eventCleanupSystem          ← delete all event entities
 deadCleanupSystem           ← destroy physics bodies + delete Dead entities
 renderSystem                ← draw all Drawable entities
-hudSystem                   ← lives, year, status, overlays
+hudSystem                   ← lives, year, elapsed timer, status line, pause overlay
 ```
+
+> **Note:** During pause (`gs.paused == true`) the main loop skips `tick()` entirely —
+> all simulation systems are frozen including timers.
+
+---
+
+## Implemented Features
+
+| Feature | Status | Owner |
+|---------|--------|-------|
+| Paddle + ball physics | ✅ Done | Aviel |
+| 21-brick grid with prerequisites | ✅ Done | Aviel / May |
+| Assignment & Tax drops | ✅ Done | May |
+| Course progress → Exam trigger | ✅ Done | May |
+| Exam phase (timer + projectiles) | ✅ Done | Yuval |
+| Academic hazards | ⚠️ Partially done — spawn active, effects pending | Yuval |
+| 5 academic years + year timer | ✅ Done | Shira |
+| Win / Lose resolution | ✅ Done | Shira |
+| Graduation stage (chair vaulting) | ✅ Done | Shira |
+| HUD (lives, year, month) | ✅ Done | May |
+| Elapsed time display | ✅ Done | May |
+| ESC pause menu (Y/N quit) | ✅ Done | May |
 
 ---
 
@@ -134,16 +160,30 @@ The binary and `res/` are placed together automatically by the post-build step i
 
 ---
 
+## Controls
+
+| Input | Action |
+|-------|--------|
+| Mouse move | Move paddle |
+| A / ← | Move paddle left |
+| D / → | Move paddle right |
+| Space | Launch ball / confirm action |
+| ESC | Pause game (shows quit menu) |
+| Y | Confirm quit (while paused) |
+| N | Resume game (while paused) |
+| R | Reset scene |
+
+---
+
 ## Debug Hotkeys
 
-Available while the game is paused (useful for testing individual systems):
+Available during gameplay (useful for testing individual systems in isolation):
 
 | Key | Action |
 |-----|--------|
 | H | Synthesize CourseHit event |
 | J | Synthesize DropCaught event |
 | E | Synthesize ExamStarted{course 0} |
-| K | Synthesize HazardTriggered event |
 | L | Synthesize LifeLost event |
 | Space | Launch ball |
 | R | Reset scene |
