@@ -61,6 +61,7 @@ void phys::setPosition(ent_type e, float x, float y) {
 /// @param e The entity whose body should be destroyed
 /// @return void
 void phys::destroyBody(ent_type e) {
+    if (!B2_IS_NON_NULL(g_world)) return;
     Entity en{e};
     if (en.has<PhysicsBody>())
         b2DestroyBody(en.get<PhysicsBody>().body);

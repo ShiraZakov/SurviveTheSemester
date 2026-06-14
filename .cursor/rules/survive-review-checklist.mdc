@@ -1,0 +1,16 @@
+---
+description: Pre-merge review checklist for Survive the Semester changes
+alwaysApply: true
+---
+
+# Survive the Semester — change review
+
+Before adding or merging gameplay/ECS changes, review everything added so far and verify:
+
+1. **ECS** — Components stay plain data; systems own behavior; no logic in components; no tight coupling between systems; entities are IDs + component composition.
+2. **Game design** — Breakout core loop, power-ups, level flow, and intended feel stay consistent with the plan.
+3. **No unnecessary work** — No redundant iterations, duplicated queries, per-frame allocations that could be cached, dead branches, or over-engineered abstractions.
+4. **C++** — RAII, correct ownership, const correctness, pass-by-reference for non-trivial types, no unnecessary copies, no raw new/delete, lean headers.
+5. **BAGEL idioms** — Match bagel26 reference style; use BAGEL primitives directly, not unnecessary wrappers.
+
+For each issue: cite file and line, explain what is wrong, suggest the minimal fix. If an area checks out, say so explicitly.

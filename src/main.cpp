@@ -44,6 +44,8 @@ int main() {
             } else if (ev.type == SDL_EVENT_KEY_DOWN) {
                 if (ev.key.scancode == SDL_SCANCODE_ESCAPE) running = false;
                 else game.onKeyDown((int)ev.key.scancode);
+            } else if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                game.onMouseDown((int)ev.button.button);
             }
         }
 

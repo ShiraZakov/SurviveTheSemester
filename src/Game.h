@@ -10,6 +10,7 @@ struct SDL_Renderer;
 // Singleton / lookup accessors used by all verticals.
 bagel::ent_type gameStateEntity();
 GameState&      gameState();
+void bindGameState(bagel::ent_type id);   // test harness
 bagel::ent_type courseEntity(int id);   // returns {-1} if no course with that id
 
 inline int countCaughtTax(const GameState& gs) {
@@ -27,6 +28,7 @@ class SurviveGame {
 public:
     bool init(SDL_Renderer* renderer);
     void onKeyDown(int scancode);          // SDL_Scancode, passed as int
+    void onMouseDown(int button);          // SDL mouse button
     void tick(const bool* keys, float dt); // one fixed-timestep simulation step
     void draw();                           // render once per frame
     void shutdown();

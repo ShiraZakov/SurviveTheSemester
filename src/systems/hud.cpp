@@ -36,8 +36,9 @@ static const char* phaseName(Phase p) {
     switch (p) {
         case Phase::MENU:    return "MENU";
         case Phase::PLAYING: return "PLAYING";
-        case Phase::EXAM:    return "EXAM";
-        case Phase::WON:     return "WON";
+        case Phase::EXAM:        return "EXAM";
+        case Phase::GRADUATION:  return "GRADUATION";
+        case Phase::WON:         return "WON";
         default:             return "LOST";
     }
 }
@@ -123,6 +124,43 @@ void hudSystem(SDL_Renderer* r) {
         SDL_RenderDebugText(r,
             (static_cast<float>(Config::WINDOW_W) * 0.5f - textW * 0.5f) / scale,
             static_cast<float>(Config::WINDOW_H) * 0.70f / scale,
+            msg);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+    }
+
+    if (gs.phase == Phase::GRADUATION) {
+        char foulBuf[32];
+        std::snprintf(foulBuf, sizeof foulBuf, "fouls: %d", gs.gradFouls);
+        constexpr float scale = 1.6f;
+        SDL_SetRenderDrawColorFloat(r, 1.0f, 0.45f, 0.35f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r, 8.0f / scale, 72.0f / scale, foulBuf);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+    }
+
+    if (gs.phase == Phase::GRADUATION && gs.gradAwaitingSpace && gs.lives > 0) {
+        constexpr float scale = 2.0f;
+        const char* msg = "Foul!  Press SPACE to retry graduation";
+        const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+            * static_cast<float>(std::strlen(msg));
+        SDL_SetRenderDrawColorFloat(r, 1.0f, 0.45f, 0.35f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r,
+            (static_cast<float>(Config::WINDOW_W) * 0.5f - textW * 0.5f) / scale,
+            static_cast<float>(Config::WINDOW_H) * 0.88f / scale,
+            msg);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+    } else if (gs.phase == Phase::GRADUATION && gs.gradAnimStep == 0
+        && gs.gradNextChair < Config::graduationPathRows()) {
+        constexpr float scale = 2.0f;
+        const char* msg = "Left click to jump toward the stage";
+        const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+            * static_cast<float>(std::strlen(msg));
+        SDL_SetRenderDrawColorFloat(r, 1.0f, 0.95f, 0.3f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r,
+            (static_cast<float>(Config::WINDOW_W) * 0.5f - textW * 0.5f) / scale,
+            static_cast<float>(Config::WINDOW_H) * 0.88f / scale,
             msg);
         SDL_SetRenderScale(r, 1.0f, 1.0f);
     }

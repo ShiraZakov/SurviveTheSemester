@@ -135,6 +135,34 @@ Entity spawnHazard(int courseId, float x, float y, HazardType type) {
     return e;
 }
 
+Entity spawnGradChair(int index, float x, float y) {
+    Entity e = Entity::create();
+    e.addAll(Position{x, y}, Size{Config::GRAD_CHAIR_W, Config::GRAD_CHAIR_H},
+             Drawable{1.0f, 1.0f, 1.0f, 1.0f, Shape::Rect},
+             sprites::makePart(sprites::Id::GRAD_CHAIR),
+             GradChairInfo{index, false, false}, GradChairTag{});
+    return e;
+}
+
+Entity spawnGradStageBackground() {
+    const float h = (static_cast<float>(Config::WINDOW_W) * Config::GRAD_BG_ASPECT) / Config::PPM;
+    Entity e = Entity::create();
+    e.addAll(Position{Config::WORLD_W * 0.5f, h * 0.5f}, Size{Config::WORLD_W, h},
+             Drawable{1.0f, 1.0f, 1.0f, 1.0f, Shape::Rect},
+             sprites::makePart(sprites::Id::GRAD_STAGE_BACKGROUND), GradStageTag{});
+    return e;
+}
+
+Entity spawnGradObstacle(float x, int rowGap, float dir) {
+    Entity e = Entity::create();
+    e.addAll(Position{x, Config::graduationObstacleY(rowGap)},
+             Size{Config::GRAD_OBSTACLE_W, Config::GRAD_OBSTACLE_H},
+             Drawable{0.88f, 0.28f, 0.22f, 1.0f, Shape::Rect},
+             GradObstacleInfo{rowGap, dir, false},
+             GradObstacleTag{});
+    return e;
+}
+
 Entity spawnCourse(int id) {
     Entity e = Entity::create();
     e.add(Course{id, CourseState::ACTIVE, 0.0f});
@@ -146,7 +174,10 @@ Entity spawnGameState() {
     GameState gs{
         Config::START_LIVES, Config::START_AVERAGE, Phase::PLAYING, -1, 0, Config::COURSES,
         {}, 1, 0.0f, 0.0f, false, false,
-        0.0f, 0.0f, 0, 0, 0.0f, false, 0};
+        0.0f, 0.0f, 0, 0, 0.0f, false, 0,
+        false, 0, 0, 0, 0.0f, Config::WORLD_W * 0.5f, Config::WORLD_W * 0.5f,
+        Config::graduationStudentStartY(), -1,
+        0, false, false};
     gs.taxOutcome.fill(GameState::TAX_PENDING);
     e.addAll(gs, GameStateTag{});
     return e;

@@ -18,11 +18,6 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
-static ent_type g_gs{-1};
-
-bagel::ent_type gameStateEntity() { return g_gs; }
-GameState& gameState() { return Entity(g_gs).get<GameState>(); }
-
 bagel::ent_type courseEntity(int id) {
     static const Mask mask = MaskBuilder().set<Course>().build();
     static int q = World::createQuery(mask);
@@ -70,8 +65,27 @@ static void clearAll() {
     }
 }
 
+static void setupGraduationPreview() {
+    const float W = Config::WORLD_W, H = Config::WORLD_H, t = Config::WALL;
+    spawnWall(W * 0.5f, t * 0.5f,     W, t);
+    spawnWall(W * 0.5f, H - t * 0.5f, W, t);
+    spawnWall(t * 0.5f, H * 0.5f,     t, H);
+    spawnWall(W - t * 0.5f, H * 0.5f, t, H);
+    spawnPaddle(W * 0.5f, Config::paddleY());
+
+    GameState& gs = gameState();
+    gs.phase = Phase::GRADUATION;
+    gs.started = true;
+    enterGraduationStage();
+}
+
 void SurviveGame::setupScene() {
-    g_gs = spawnGameState().entity();
+    bindGameState(spawnGameState().entity());
+
+#ifdef DEBUG_GRADUATION_STAGE
+    setupGraduationPreview();
+    return;
+#endif
 
     const float W = Config::WORLD_W, H = Config::WORLD_H, t = Config::WALL;
     spawnWall(W * 0.5f, t * 0.5f,     W, t);   // top
@@ -135,6 +149,10 @@ void SurviveGame::onKeyDown(int sc) {
         case SDL_SCANCODE_L: ev::lifeLost(1);                        break;
         case SDL_SCANCODE_SPACE: {
             GameState& gs = gameState();
+            if (gs.phase == Phase::GRADUATION && gs.gradAwaitingSpace) {
+                graduationOnSpace();
+                break;
+            }
             if (gs.phase == Phase::LOST || gs.phase == Phase::WON) {
                 clearAll();
                 setupScene();
@@ -142,9 +160,17 @@ void SurviveGame::onKeyDown(int sc) {
             launchBallAndStart();
             break;
         }
-        case SDL_SCANCODE_R: clearAll(); setupScene(); break;
+        case SDL_SCANCODE_R:
+            clearAll();
+            setupScene();
+            break;
         default: break;
     }
+}
+
+void SurviveGame::onMouseDown(int button) {
+    if (button == SDL_BUTTON_LEFT)
+        graduationOnMouseDown(_renderer);
 }
 
 void SurviveGame::tick(const bool* keys, float dt) {
@@ -163,6 +189,18 @@ void SurviveGame::tick(const bool* keys, float dt) {
         hazardSystem();
         yearSystem(dt);
         gameStateSystem();
+        eventCleanupSystem();
+        deadCleanupSystem();
+    } else if (gs.phase == Phase::GRADUATION) {
+        if (!gs.gradAwaitingSpace)
+            graduationInputSystem(_renderer);
+        graduationSystem(dt);
+        gameStateSystem();
+        if (gs.phase == Phase::GRADUATION && gs.lives <= 0) {
+            gs.phase = Phase::LOST;
+            gs.started = false;
+        }
+        yearSystem(dt);
         eventCleanupSystem();
         deadCleanupSystem();
     } else {

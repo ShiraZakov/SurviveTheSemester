@@ -72,6 +72,11 @@ enum class Id {
     YEAR_FIFTH,
     CURRENT_YEAR,
 
+    GRAD_STAGE_BACKGROUND,
+    GRAD_CHAIR,
+    GRAD_STUDENT_IDLE,
+    GRAD_STUDENT_VAULT,
+
     COUNT
 };
 
@@ -98,6 +103,7 @@ bool courseShowsLockedSprite(int courseIndex, bool unlocked);
 
 void drawPart(SDL_Renderer* r, const SpritePart& sp, const SDL_FRect& dest);
 void draw(SDL_Renderer* r, Id id, float dstX, float dstY, float dstW, float dstH);
+void drawGraduationStage(SDL_Renderer* r);
 void drawMeter3(SDL_Renderer* r, int filled, int maxFilled, float x, float y, float w, float h);
 void drawMeter5(SDL_Renderer* r, int filled, int maxFilled, float x, float y, float w, float h);
 

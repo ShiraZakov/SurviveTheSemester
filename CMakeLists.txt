@@ -14,6 +14,7 @@ add_executable(SurviveTheSemester
         bagel.h
         src/main.cpp
         src/Game.cpp
+        src/GameStateAccess.cpp
         src/Physics.cpp
         src/EntityFactory.cpp
         src/Sprites.cpp
@@ -28,10 +29,16 @@ add_executable(SurviveTheSemester
         src/systems/hazards.cpp
         src/systems/endgame.cpp
         src/systems/year.cpp
+        src/systems/graduation.cpp
 )
 target_include_directories(SurviveTheSemester PRIVATE
         ${PROJECT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/src)
+
+option(DEBUG_GRADUATION_STAGE "Boot directly into graduation stage (stage 2 preview)" OFF)
+if(DEBUG_GRADUATION_STAGE)
+    target_compile_definitions(SurviveTheSemester PRIVATE DEBUG_GRADUATION_STAGE=1)
+endif()
 
 set(SDL_STATIC ON)
 set(SDL_SHARED OFF)
@@ -64,6 +71,7 @@ add_custom_command(TARGET SurviveTheSemester POST_BUILD
 
 add_executable(brick_prereq_tests
         tests/test_brick_prereqs.cpp
+        src/GameStateAccess.cpp
         src/Sprites.cpp
         src/systems/brick_progress.cpp
         src/EntityFactory.cpp
@@ -76,3 +84,19 @@ target_link_libraries(brick_prereq_tests PRIVATE SDL3-static SDL3_image-static b
 
 enable_testing()
 add_test(NAME brick_prereq_tests COMMAND brick_prereq_tests)
+
+add_executable(graduation_year_tests
+        tests/test_graduation_year.cpp
+        src/GameStateAccess.cpp
+        src/systems/year.cpp
+        src/systems/graduation.cpp
+        src/EntityFactory.cpp
+        src/Physics.cpp
+        src/Sprites.cpp
+        src/systems/brick_progress.cpp
+)
+target_include_directories(graduation_year_tests PRIVATE
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(graduation_year_tests PRIVATE SDL3-static SDL3_image-static box2d)
+add_test(NAME graduation_year_tests COMMAND graduation_year_tests)

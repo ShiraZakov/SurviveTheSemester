@@ -1,5 +1,6 @@
 #include "Sprites.h"
 #include "Components.h"
+#include "Config.h"
 
 #include <SDL3_image/SDL_image.h>
 
@@ -10,7 +11,7 @@ namespace sprites {
 
 namespace {
 
-enum class Atlas { Courses, Student, Locked, COUNT };
+enum class Atlas { Courses, Student, Locked, Graduation, COUNT };
 
 struct Rect { float x, y, w, h; };
 
@@ -40,10 +41,10 @@ static void defineSprites() {
     set(Id::COURSE_COMPUTER_ARCHITECTURE, Atlas::Courses, 1147, 373, 1328, 627);
     set(Id::COURSE_ALGORITHMS, Atlas::Courses, 1327, 373, 1515, 627);
     set(Id::COURSE_DATABASES, Atlas::Courses, 75, 653, 302, 933);
-    set(Id::COURSE_OPERATING_SYSTEMS, Atlas::Courses, 975, 653, 1209, 933);
-    set(Id::COURSE_COMPUTER_NETWORKS, Atlas::Courses, 750, 653, 975, 933);
-    set(Id::COURSE_COMPUTABILITY, Atlas::Courses, 527, 653, 751, 933);
-    set(Id::COURSE_COMPLEXITY, Atlas::Courses, 303, 653, 526, 933);
+    set(Id::COURSE_OPERATING_SYSTEMS, Atlas::Courses, 303, 653, 526, 933);
+    set(Id::COURSE_COMPUTER_NETWORKS, Atlas::Courses, 527, 653, 751, 933);
+    set(Id::COURSE_COMPUTABILITY, Atlas::Courses, 750, 653, 975, 933);
+    set(Id::COURSE_COMPLEXITY, Atlas::Courses, 975, 653, 1209, 933);
     set(Id::COURSE_FINAL_PROJECT, Atlas::Courses, 1207, 653, 1461, 933);
 
     set(Id::PLAYER_RUN_RIGHT, Atlas::Student, 606, 138, 946, 304);
@@ -84,6 +85,11 @@ static void defineSprites() {
     set(Id::YEAR_FOURTH, Atlas::Locked, 917, 101, 1136, 161);
     set(Id::YEAR_FIFTH, Atlas::Locked, 1175, 95, 1392, 165);
     set(Id::CURRENT_YEAR, Atlas::Locked, 756, 17, 975, 82);
+
+    set(Id::GRAD_STAGE_BACKGROUND, Atlas::Graduation, 0, 0, 1536, 380);
+    set(Id::GRAD_CHAIR, Atlas::Graduation, 121, 462, 238, 567);
+    set(Id::GRAD_STUDENT_IDLE, Atlas::Graduation, 187, 879, 285, 995);
+    set(Id::GRAD_STUDENT_VAULT, Atlas::Graduation, 651, 705, 828, 977);
 }
 
 static constexpr Id kCourseBricks[] = {
@@ -230,6 +236,7 @@ bool init(SDL_Renderer* renderer) {
         "course_bricks_spritesheet.jpeg",
         "student_spritesheet.jpeg",
         "locked_courses_spritesheet.jpeg",
+        "graduation_stage_spritesheet.png",
     };
     for (int i = 0; i < static_cast<int>(Atlas::COUNT); ++i) {
         if (!loadTexture(renderer, files[i], i)) return false;
@@ -326,6 +333,13 @@ void drawPart(SDL_Renderer* r, const SpritePart& sp, const SDL_FRect& dest) {
 void draw(SDL_Renderer* r, Id id, float dstX, float dstY, float dstW, float dstH) {
     const SDL_FRect dest{dstX, dstY, dstW, dstH};
     drawPart(r, makePart(id), dest);
+}
+
+void drawGraduationStage(SDL_Renderer* r) {
+    if (!ready()) return;
+    const float stageH = static_cast<float>(Config::WINDOW_W) * Config::GRAD_BG_ASPECT;
+    draw(r, Id::GRAD_STAGE_BACKGROUND, 0.0f, 0.0f,
+         static_cast<float>(Config::WINDOW_W), stageH);
 }
 
 void drawMeter3(SDL_Renderer* r, int filled, int maxFilled, float x, float y, float w, float h) {

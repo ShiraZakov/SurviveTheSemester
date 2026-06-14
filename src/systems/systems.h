@@ -32,3 +32,9 @@ void hazardSystem();                           // YUVAL  (consumes HazardTrigger
 
 void yearSystem(float dt);                     // SHIRA  (year timer + row completion)
 void gameStateSystem();                        // SHIRA  (consumes LifeLost/ExamFinished)
+void enterGraduationStage();
+void graduationSystem(float dt);
+void graduationInputSystem(SDL_Renderer* r);
+void graduationOnMouseDown(SDL_Renderer* r);
+void graduationOnSpace();
+void graduationOnYear5Expired();

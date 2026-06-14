@@ -54,6 +54,19 @@ struct GameState {
     bool  hasPrevMouse;     // false until the first mouse sample is taken
     // Hazard spawn tracking
     int   lastHazardYear;   // the last year for which a hazard was spawned (0 = none)
+    // Graduation stage (stage 2)
+    bool  gradInitialized;
+    int   gradNextChair;
+    int   gradChairTotal;
+    int   gradAnimStep;     // 0=idle, 1=vault, 2=landed
+    float gradAnimTimer;
+    float gradStudentX;     // horizontal position driven by mouse
+    float gradJumpStartX;   // vault animation origin X
+    float gradJumpStartY;   // vault animation origin Y
+    int   gradActiveChair;  // chair index being vaulted (-1 when idle)
+    int   gradFouls;
+    bool  gradBeingDragged;
+    bool  gradAwaitingSpace;
 };
 
 // ---- Tags (empty; checked via has<>(), never get<>()) ----
@@ -64,8 +77,15 @@ struct WallTag      {};
 struct DropTag      {};
 struct ProjectileTag{};
 struct HazardTag    {};
+struct GradChairTag {};
+struct GradStudentTag {};
+struct GradStageTag {};
+struct GradObstacleTag {};
 struct GameStateTag {};
 struct DeadTag      {};   // marks entity for deletion by deadCleanupSystem
+
+struct GradChairInfo { int index; bool cleared; bool hidden; };
+struct GradObstacleInfo { int rowGap; float dir; bool contactFouled; };
 
 // ---- Storage customization ----
 // Tags: zero-storage (presence-only, checked via has<>).
@@ -80,6 +100,10 @@ namespace bagel {
     template<> struct Storage<DropTag>       final : NoInstance { using type = TaggedStorage<DropTag>; };
     template<> struct Storage<ProjectileTag> final : NoInstance { using type = TaggedStorage<ProjectileTag>; };
     template<> struct Storage<HazardTag>     final : NoInstance { using type = TaggedStorage<HazardTag>; };
+    template<> struct Storage<GradChairTag>  final : NoInstance { using type = TaggedStorage<GradChairTag>; };
+    template<> struct Storage<GradStudentTag> final : NoInstance { using type = TaggedStorage<GradStudentTag>; };
+    template<> struct Storage<GradStageTag>   final : NoInstance { using type = TaggedStorage<GradStageTag>; };
+    template<> struct Storage<GradObstacleTag> final : NoInstance { using type = TaggedStorage<GradObstacleTag>; };
     template<> struct Storage<GameStateTag>  final : NoInstance { using type = TaggedStorage<GameStateTag>; };
     template<> struct Storage<DeadTag>       final : NoInstance { using type = TaggedStorage<DeadTag>; };
 

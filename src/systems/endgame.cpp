@@ -31,9 +31,11 @@ void gameStateSystem() {
         for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
             const int amount = e.get<LifeLost>().amount;
             gs.lives -= amount;
-            gs.average = std::max(0.0f,
-                gs.average - Config::FOUL_PENALTY * static_cast<float>(amount));
-            gs.started = false;
+            if (gs.phase != Phase::GRADUATION) {
+                gs.average = std::max(0.0f,
+                    gs.average - Config::FOUL_PENALTY * static_cast<float>(amount));
+                gs.started = false;
+            }
         }
     }
 
@@ -71,14 +73,23 @@ void gameStateSystem() {
     if (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM) {
         if (gs.lives <= 0)
             gs.phase = Phase::LOST;
-        else if (allBricksCleared())
-            gs.phase = Phase::WON;
+        else if (allBricksCleared()) {
+            gs.phase = Phase::GRADUATION;
+            gs.started = true;
+            gs.yearsExhausted = false;
+            enterGraduationStage();
+        }
         else if (gs.yearsExhausted)
             gs.phase = Phase::LOST;
-        else if (gs.coursesTotal > 0 && gs.coursesDone >= gs.coursesTotal)
-            gs.phase = (gs.average >= Config::PASS) ? Phase::WON : Phase::LOST;
+        else if (gs.coursesTotal > 0 && gs.coursesDone >= gs.coursesTotal
+                 && gs.average < Config::PASS)
+            gs.phase = Phase::LOST;
 
         if (gs.phase == Phase::LOST || gs.phase == Phase::WON)
             gs.started = false;
+    } else if (gs.phase == Phase::GRADUATION && gs.lives <= 0) {
+        gs.phase = Phase::LOST;
+        gs.started = false;
+        gs.gradAwaitingSpace = false;
     }
 }

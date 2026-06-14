@@ -2,6 +2,7 @@
 // TODO (AVIEL): sprites, polish, layering.
 #include "systems/systems.h"
 #include "Components.h"
+#include "Game.h"
 #include "Config.h"
 #include "Sprites.h"
 #include <SDL3/SDL.h>
@@ -21,7 +22,7 @@ static SDL_FRect spriteDest(Entity e, float worldX, float drawY, float worldW, f
     float drawW = boxW;
     float drawH = drawW * aspect;
 
-    if (e.has<PaddleTag>()) {
+    if (e.has<PaddleTag>() && !e.has<GradStudentTag>()) {
         const float bottom = (drawY + worldH * 0.5f) * Config::PPM;
         return {cx - drawW * 0.5f, bottom - drawH, drawW, drawH};
     }
@@ -66,11 +67,68 @@ static void drawTaxDrop(SDL_Renderer* r, float cx, float cy, float half) {
     SDL_RenderFillRect(r, &bar);
 }
 
-/// @brief Draws all entities that have Position + Size + Drawable components.
-///        Handles sprites, fallback primitives, tax drop visuals, and brick meters.
-/// @param r SDL renderer
-/// @return void
+static void drawEntity(SDL_Renderer* r, Entity e) {
+    if (e.has<GradStageTag>()) return;
+
+    if (e.has<GradChairTag>() && e.has<GradChairInfo>()) {
+        if (e.get<GradChairInfo>().hidden) return;
+    }
+
+    const auto& p = e.get<Position>();
+    const auto& s = e.get<Size>();
+    const auto& d = e.get<Drawable>();
+    float drawY = p.y;
+    if (e.has<PaddleImpact>())
+        drawY += 0.14f * (e.get<PaddleImpact>().time / 0.10f);
+
+    if (e.has<DropTag>() && e.has<DropInfo>() && e.get<DropInfo>().type == DropType::Tax) {
+        const float half = (s.w * 0.5f) * Config::PPM;
+        drawTaxDrop(r, p.x * Config::PPM, drawY * Config::PPM, half);
+        return;
+    }
+
+    if (e.has<SpritePart>()) {
+        if (!sprites::ready()) return;
+        SpritePart sp = e.get<SpritePart>();
+        if (e.has<BrickTag>() && e.has<BrickInfo>() && e.has<BrickProgress>())
+            sp = brickSpritePart(e);
+        const SDL_FRect dest = spriteDest(e, p.x, drawY, s.w, s.h, sp);
+        sprites::drawPart(r, sp, dest);
+        if (e.has<BrickProgress>()) {
+            const auto& prog = e.get<BrickProgress>();
+            if (!prog.unlocked) return;
+            const float mw = s.w * Config::PPM * 0.55f;
+            const float mh = prog.max == 5 ? 10.0f : 12.0f;
+            const float mx = (p.x * Config::PPM) - mw * 0.5f;
+            const float my = (drawY + s.h * 0.5f) * Config::PPM - mh - 4.0f;
+            if (prog.max == 5)
+                sprites::drawMeter5(r, prog.filled, prog.max, mx, my, mw, mh);
+            else
+                sprites::drawMeter3(r, prog.filled, prog.max, mx, my, mw, mh);
+        }
+        return;
+    }
+
+    SDL_SetRenderDrawColorFloat(r, d.r, d.g, d.b, d.a);
+    if (d.shape == Shape::Circle) {
+        fillCircle(r, p.x * Config::PPM, drawY * Config::PPM, (s.w * 0.5f) * Config::PPM);
+    } else {
+        SDL_FRect rect{
+            (p.x - s.w * 0.5f) * Config::PPM,
+            (drawY - s.h * 0.5f) * Config::PPM,
+            s.w * Config::PPM, s.h * Config::PPM};
+        SDL_RenderFillRect(r, &rect);
+    }
+}
+
 void renderSystem(SDL_Renderer* r) {
+    GameState& gs = gameState();
+    if (sprites::ready()
+        && gs.gradInitialized
+        && (gs.phase == Phase::GRADUATION || gs.phase == Phase::WON || gs.phase == Phase::LOST)) {
+        sprites::drawGraduationStage(r);
+    }
+
     static const Mask mask = MaskBuilder()
         .set<Position>()
         .set<Size>()
@@ -78,50 +136,14 @@ void renderSystem(SDL_Renderer* r) {
         .build();
     static int q = World::createQuery(mask);
 
+    // Graduation student always draws last so the stage never covers them (incl. on WON).
     for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-        const auto& p = e.get<Position>();
-        const auto& s = e.get<Size>();
-        const auto& d = e.get<Drawable>();
-        float drawY = p.y;
-        if (e.has<PaddleImpact>())
-            drawY += 0.14f * (e.get<PaddleImpact>().time / 0.10f);
+        if (e.has<GradStudentTag>()) continue;
+        drawEntity(r, e);
+    }
 
-        if (e.has<DropTag>() && e.has<DropInfo>() && e.get<DropInfo>().type == DropType::Tax) {
-            const float half = (s.w * 0.5f) * Config::PPM;
-            drawTaxDrop(r, p.x * Config::PPM, drawY * Config::PPM, half);
-            continue;
-        }
-
-        if (e.has<SpritePart>()) {
-            if (!sprites::ready()) continue;
-            SpritePart sp = e.get<SpritePart>();
-            if (e.has<BrickTag>() && e.has<BrickInfo>() && e.has<BrickProgress>())
-                sp = brickSpritePart(e);
-            const SDL_FRect dest = spriteDest(e, p.x, drawY, s.w, s.h, sp);
-            sprites::drawPart(r, sp, dest);
-            if (e.has<BrickProgress>()) {
-                const auto& prog = e.get<BrickProgress>();
-                if (!prog.unlocked) continue;
-                const float mw = s.w * Config::PPM * 0.55f;
-                const float mh = prog.max == 5 ? 10.0f : 12.0f;
-                const float mx = (p.x * Config::PPM) - mw * 0.5f;
-                const float my = (drawY + s.h * 0.5f) * Config::PPM - mh - 4.0f;
-                if (prog.max == 5)
-                    sprites::drawMeter5(r, prog.filled, prog.max, mx, my, mw, mh);
-                else
-                    sprites::drawMeter3(r, prog.filled, prog.max, mx, my, mw, mh);
-            }
-            continue;
-        }
-        SDL_SetRenderDrawColorFloat(r, d.r, d.g, d.b, d.a);
-        if (d.shape == Shape::Circle) {
-            fillCircle(r, p.x * Config::PPM, drawY * Config::PPM, (s.w * 0.5f) * Config::PPM);
-        } else {
-            SDL_FRect rect{
-                (p.x - s.w * 0.5f) * Config::PPM,
-                (drawY - s.h * 0.5f) * Config::PPM,
-                s.w * Config::PPM, s.h * Config::PPM};
-            SDL_RenderFillRect(r, &rect);
-        }
+    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+        if (!e.has<GradStudentTag>()) continue;
+        drawEntity(r, e);
     }
 }

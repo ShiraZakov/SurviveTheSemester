@@ -26,25 +26,36 @@ static bool yearCoursesCleared(int year) {
 }
 
 /// @brief Advances the academic year timer. Moves to the next year when all its
-///        courses are cleared or the 30-second timer expires. Sets yearsExhausted
-///        if year 5 ends without completing everything.
+///        courses are cleared or the per-year timer expires. Sets yearsExhausted
+///        if year 5 ends without completing everything (stage 1). During graduation,
+///        only the timer applies; year 5 expiry ends the game (LOST).
 /// @param dt Fixed timestep in seconds
 /// @return void
 void yearSystem(float dt) {
     GameState& gs = gameState();
-    if (gs.phase != Phase::PLAYING && gs.phase != Phase::EXAM) return;
-    if (!gs.started || gs.yearsExhausted) return;
+    if (gs.phase != Phase::PLAYING && gs.phase != Phase::EXAM && gs.phase != Phase::GRADUATION) return;
+
+    const bool inGraduation = gs.phase == Phase::GRADUATION;
+    if (!inGraduation && (!gs.started || gs.yearsExhausted)) return;
+    if (inGraduation && gs.gradAwaitingSpace) return;
 
     gs.totalTime += dt;
     gs.yearTimer += dt;
 
-    const bool yearComplete = yearCoursesCleared(gs.currentYear)
-        || gs.yearTimer >= Config::YEAR_SECONDS;
+    const bool timerExpired = gs.yearTimer >= Config::YEAR_SECONDS;
+    const bool yearComplete = gs.phase == Phase::GRADUATION
+        ? timerExpired
+        : (yearCoursesCleared(gs.currentYear) || timerExpired);
     if (!yearComplete) return;
 
     if (gs.currentYear < Config::YEAR_COUNT) {
         gs.currentYear += 1;
         gs.yearTimer = 0.0f;
+        return;
+    }
+
+    if (gs.phase == Phase::GRADUATION) {
+        graduationOnYear5Expired();
         return;
     }
 

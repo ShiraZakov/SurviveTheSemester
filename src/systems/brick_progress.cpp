@@ -27,17 +27,19 @@ bool brickPrereqsMet(Entity brick) {
     return true;
 }
 
-bool brickShowsLocked(Entity brick) {
-    if (brickPrereqsMet(brick) || !brick.has<BrickInfo>()) return false;
+bool brickDrawLocked(Entity brick) {
+    if (!brick.has<BrickInfo>() || !brick.has<BrickProgress>()) return false;
     const int ci = brick.get<BrickInfo>().courseIndex;
-    return sprites::courseUsesLockedArt(ci) || ci == sprites::FINAL_COURSE_INDEX;
+    const auto& prog = brick.get<BrickProgress>();
+
+    if (ci == sprites::FINAL_COURSE_INDEX)
+        return !brickPrereqsMet(brick);
+
+    return sprites::courseShowsLockedSprite(ci, prog.unlocked);
 }
 
-bool brickDrawLocked(Entity brick) {
-    if (!brick.has<BrickInfo>()) return false;
-    const int ci = brick.get<BrickInfo>().courseIndex;
-    if (ci == sprites::FINAL_COURSE_INDEX) return !brickPrereqsMet(brick);
-    return brickShowsLocked(brick);
+bool brickShowsLocked(Entity brick) {
+    return brickDrawLocked(brick);
 }
 
 SpritePart brickSpritePart(Entity brick) {
@@ -132,17 +134,12 @@ void brickUnlockSystem() {
         const int ci = e.get<BrickInfo>().courseIndex;
         const bool prereqsMet = brickPrereqsMet(e);
 
-        applyBrickSprite(e, ci, brickDrawLocked(e));
-
-        if (!prereqsMet) {
+        if (!prereqsMet)
             prog.unlocked = false;
-            continue;
-        }
-
-        if (!prog.unlocked) {
+        else if (!prog.unlocked)
             prog.unlocked = true;
-            applyBrickSprite(e, ci, false);
-        }
+
+        applyBrickSprite(e, ci, brickDrawLocked(e));
     }
 }
 
