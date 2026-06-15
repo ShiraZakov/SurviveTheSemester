@@ -57,9 +57,8 @@ int main() {
         acc += frame;
 
         if (!game.isPaused()) {
-            const bool* keys = SDL_GetKeyboardState(nullptr);
             while (acc >= Config::FIXED_DT) {
-                game.tick(keys, Config::FIXED_DT);
+                game.tick(Config::FIXED_DT);
                 acc -= Config::FIXED_DT;
             }
         } else {

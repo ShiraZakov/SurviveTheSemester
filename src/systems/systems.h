@@ -16,7 +16,7 @@ SpritePart brickSpritePart(bagel::Entity brick);
 bool brickIsPlayable(bagel::Entity brick);
 bool isFinalProjectLocked();
 
-void inputSystem(const bool* keys, float dt, SDL_Renderer* r);  // AVIEL
+void inputSystem(float dt, SDL_Renderer* r);     // AVIEL
 void courseHitSystem();                        // AVIEL  (consumes CourseHit)
 void brickUnlockSystem();                      // AVIEL
 void brickMeterSystem();                       // MAY

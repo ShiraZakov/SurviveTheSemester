@@ -50,6 +50,7 @@ static void clearAll() {
     }
 }
 
+#ifdef DEBUG_GRADUATION_STAGE
 static void setupGraduationPreview() {
     const float W = Config::WORLD_W, H = Config::WORLD_H, t = Config::WALL;
     spawnWall(W * 0.5f, t * 0.5f,     W, t);
@@ -63,6 +64,7 @@ static void setupGraduationPreview() {
     gs.started = true;
     enterGraduationStage();
 }
+#endif
 
 void SurviveGame::setupScene() {
     bindGameState(spawnGameState().entity());
@@ -124,6 +126,138 @@ static void launchBallAndStart() {
     }
 }
 
+static void startStageOne() {
+    GameState& gs = gameState();
+    gs.phase = Phase::PLAYING;
+    gs.started = false;
+}
+
+static void startStageTwo() {
+    GameState& gs = gameState();
+    gs.phase = Phase::GRADUATION;
+    gs.started = true;
+    enterGraduationStage();
+}
+
+struct UiButton {
+    SDL_FRect rect;
+    const char* label;
+};
+
+static UiButton centeredButton(float y, const char* label) {
+    constexpr float w = 320.0f;
+    constexpr float h = 58.0f;
+    return {{(Config::WINDOW_W - w) * 0.5f, y, w, h}, label};
+}
+
+static bool inside(const UiButton& b, float x, float y) {
+    return x >= b.rect.x && x <= b.rect.x + b.rect.w
+        && y >= b.rect.y && y <= b.rect.y + b.rect.h;
+}
+
+static void drawCenteredText(SDL_Renderer* r, const char* text, float y, float scale,
+                             float red, float green, float blue) {
+    const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+        * static_cast<float>(std::strlen(text));
+    SDL_SetRenderDrawColorFloat(r, red, green, blue, 1.0f);
+    SDL_SetRenderScale(r, scale, scale);
+    SDL_RenderDebugText(r,
+        (static_cast<float>(Config::WINDOW_W) * 0.5f - textW * 0.5f) / scale,
+        y / scale,
+        text);
+    SDL_SetRenderScale(r, 1.0f, 1.0f);
+}
+
+static void drawButton(SDL_Renderer* r, const UiButton& b) {
+    SDL_SetRenderDrawColorFloat(r, 0.10f, 0.18f, 0.35f, 0.94f);
+    SDL_RenderFillRect(r, &b.rect);
+    SDL_SetRenderDrawColorFloat(r, 0.55f, 0.72f, 1.0f, 1.0f);
+    SDL_RenderRect(r, &b.rect);
+
+    const float scale = 1.65f;
+    const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+        * static_cast<float>(std::strlen(b.label));
+    SDL_SetRenderDrawColorFloat(r, 1.0f, 1.0f, 1.0f, 1.0f);
+    SDL_SetRenderScale(r, scale, scale);
+    SDL_RenderDebugText(r,
+        (b.rect.x + b.rect.w * 0.5f - textW * 0.5f) / scale,
+        (b.rect.y + 18.0f) / scale,
+        b.label);
+    SDL_SetRenderScale(r, 1.0f, 1.0f);
+}
+
+static void drawOverlayPanel(SDL_Renderer* r) {
+    SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColorFloat(r, 0.02f, 0.03f, 0.06f, 0.86f);
+    SDL_FRect bg{0.0f, 0.0f, static_cast<float>(Config::WINDOW_W), static_cast<float>(Config::WINDOW_H)};
+    SDL_RenderFillRect(r, &bg);
+    SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_NONE);
+}
+
+static void drawGuide(SDL_Renderer* r) {
+    drawOverlayPanel(r);
+    drawCenteredText(r, "How to Play", 70.0f, 3.0f, 1.0f, 0.95f, 0.35f);
+
+    const char* lines[] = {
+        "Stage 1 - Course Breakout:",
+        "Move the paddle with the mouse and click to launch the ball.",
+        "Break course bricks, catch assignments, and avoid losing lives.",
+        "Clear courses before academic years run out.",
+        "",
+        "Exam / Graduation Stage:",
+        "Use the mouse to move through the graduation challenge.",
+        "Click to jump/advance when prompted by the stage.",
+        "Avoid obstacles and fouls. Losing all lives ends the game.",
+        "",
+        "Win by finishing the final stage. Lose when lives reach zero."
+    };
+    SDL_SetRenderDrawColorFloat(r, 0.92f, 0.96f, 1.0f, 1.0f);
+    for (int i = 0; i < 11; ++i)
+        SDL_RenderDebugText(r, 190.0f, 150.0f + static_cast<float>(i) * 32.0f, lines[i]);
+
+    drawButton(r, centeredButton(720.0f, "Back"));
+}
+
+static void drawLevelSelect(SDL_Renderer* r) {
+    drawOverlayPanel(r);
+    drawCenteredText(r, "Choose Starting Level", 105.0f, 3.0f, 1.0f, 0.95f, 0.35f);
+    drawCenteredText(r, "Pick where the game should begin.", 185.0f, 1.35f, 0.86f, 0.92f, 1.0f);
+    drawButton(r, centeredButton(320.0f, "Stage 1 - Courses"));
+    drawButton(r, centeredButton(400.0f, "Stage 2 - Graduation"));
+    drawButton(r, centeredButton(510.0f, "Back"));
+}
+
+static void drawMenu(SDL_Renderer* r, bool showGuide, bool showLevelSelect) {
+    if (showGuide) {
+        drawGuide(r);
+        return;
+    }
+    if (showLevelSelect) {
+        drawLevelSelect(r);
+        return;
+    }
+
+    drawOverlayPanel(r);
+    drawCenteredText(r, "Survive the Semester", 125.0f, 3.0f, 1.0f, 0.95f, 0.35f);
+    drawCenteredText(r, "Break courses. Survive exams. Reach graduation.", 205.0f, 1.35f, 0.86f, 0.92f, 1.0f);
+    drawButton(r, centeredButton(330.0f, "Start Game"));
+    drawButton(r, centeredButton(410.0f, "Game Guide"));
+    drawButton(r, centeredButton(490.0f, "Choose Level"));
+}
+
+static void drawEndScreen(SDL_Renderer* r, Phase phase, float average) {
+    drawOverlayPanel(r);
+    if (phase == Phase::WON) {
+        char msg[96];
+        std::snprintf(msg, sizeof msg, "You Won! Average: %.0f", average);
+        drawCenteredText(r, msg, 170.0f, 3.0f, 0.35f, 1.0f, 0.40f);
+    } else {
+        drawCenteredText(r, "Game Over", 170.0f, 3.2f, 1.0f, 0.30f, 0.25f);
+    }
+    drawButton(r, centeredButton(340.0f, "Play Again"));
+    drawButton(r, centeredButton(420.0f, "Exit"));
+}
+
 void SurviveGame::onKeyDown(int sc) {
     GameState& gs = gameState();
 
@@ -147,22 +281,6 @@ void SurviveGame::onKeyDown(int sc) {
         case SDL_SCANCODE_J: ev::dropCaught(0, 0, DropType::Assignment, {-1}); break;
         case SDL_SCANCODE_E: ev::examStarted(0);                     break;
         case SDL_SCANCODE_L: ev::lifeLost(1);                        break;
-        case SDL_SCANCODE_SPACE: {
-            if (gs.phase == Phase::GRADUATION && gs.gradAwaitingSpace) {
-                graduationOnSpace();
-                break;
-            }
-            if (gs.phase == Phase::LOST || gs.phase == Phase::WON) {
-                clearAll();
-                setupScene();
-            }
-            launchBallAndStart();
-            break;
-        }
-        case SDL_SCANCODE_R:
-            clearAll();
-            setupScene();
-            break;
         default: break;
     }
 }
@@ -179,6 +297,45 @@ void SurviveGame::onMouseDown(int button, float px, float py) {
     if (button != SDL_BUTTON_LEFT) return;
     GameState& gs = gameState();
 
+    if (gs.phase == Phase::MENU) {
+        if (_showGuide) {
+            if (inside(centeredButton(720.0f, "Back"), px, py)) _showGuide = false;
+            return;
+        }
+        if (_showLevelSelect) {
+            if (inside(centeredButton(320.0f, "Stage 1 - Courses"), px, py)) {
+                startStageOne();
+                _showLevelSelect = false;
+            } else if (inside(centeredButton(400.0f, "Stage 2 - Graduation"), px, py)) {
+                startStageTwo();
+                _showLevelSelect = false;
+            } else if (inside(centeredButton(510.0f, "Back"), px, py)) {
+                _showLevelSelect = false;
+            }
+            return;
+        }
+        if (inside(centeredButton(330.0f, "Start Game"), px, py)) {
+            startStageOne();
+        } else if (inside(centeredButton(410.0f, "Game Guide"), px, py)) {
+            _showGuide = true;
+        } else if (inside(centeredButton(490.0f, "Choose Level"), px, py)) {
+            _showLevelSelect = true;
+        }
+        return;
+    }
+
+    if (gs.phase == Phase::WON || gs.phase == Phase::LOST) {
+        if (inside(centeredButton(340.0f, "Play Again"), px, py)) {
+            clearAll();
+            setupScene();
+            _showGuide = false;
+            _showLevelSelect = false;
+        } else if (inside(centeredButton(420.0f, "Exit"), px, py)) {
+            _wantsQuit = true;
+        }
+        return;
+    }
+
     if (gs.paused) {
         // YES button region (centered ~35% from left)
         constexpr float btnY  = Config::WINDOW_H * 0.60f;
@@ -192,14 +349,21 @@ void SurviveGame::onMouseDown(int button, float px, float py) {
         return;
     }
 
-    if (gs.phase == Phase::GRADUATION)
+    if (gs.phase == Phase::PLAYING && !gs.started) {
+        launchBallAndStart();
+        return;
+    }
+
+    if (gs.phase == Phase::GRADUATION && gs.gradAwaitingSpace)
+        graduationOnSpace();
+    else if (gs.phase == Phase::GRADUATION)
         graduationOnMouseDown(_renderer);
 }
 
-void SurviveGame::tick(const bool* keys, float dt) {
+void SurviveGame::tick(float dt) {
     GameState& gs = gameState();
     if (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM) {
-        inputSystem(keys, dt, _renderer);
+        inputSystem(dt, _renderer);
         physicsStepSystem(dt);
         contactEventSystem();
         brickMeterSystem();
@@ -232,5 +396,10 @@ void SurviveGame::draw() {
     SDL_RenderClear(_renderer);
     renderSystem(_renderer);
     hudSystem(_renderer);
+    GameState& gs = gameState();
+    if (gs.phase == Phase::MENU)
+        drawMenu(_renderer, _showGuide, _showLevelSelect);
+    else if (gs.phase == Phase::WON || gs.phase == Phase::LOST)
+        drawEndScreen(_renderer, gs.phase, gs.average);
     SDL_RenderPresent(_renderer);
 }

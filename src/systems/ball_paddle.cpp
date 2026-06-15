@@ -57,9 +57,9 @@ static void paddleHitSystem() {
     static int q = World::createQuery(mask);
 
     constexpr float MAX_BOUNCE_X = 0.82f;
-    constexpr float PADDLE_SPIN = 0.025f;
-    constexpr float SAME_DIRECTION_BOOST = 0.045f;
-    constexpr float OPPOSING_DIRECTION_DRAG = 0.015f;
+    constexpr float PADDLE_SPIN = 0.035f;
+    constexpr float SAME_DIRECTION_BOOST = 0.090f;
+    constexpr float OPPOSING_DIRECTION_DRAG = 0.020f;
     constexpr float CENTER_SLOWDOWN = 0.04f;
     constexpr float IMPACT_TIME = 0.10f;
 

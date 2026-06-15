@@ -116,7 +116,7 @@ void hudSystem(SDL_Renderer* r) {
 
     if (!gs.started && gs.phase == Phase::PLAYING) {
         constexpr float scale = 2.5f;
-        const char* msg = "Press SPACE to start";
+        const char* msg = "Click to launch";
         const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
             * static_cast<float>(std::strlen(msg));
         SDL_SetRenderDrawColorFloat(r, 1.0f, 0.95f, 0.3f, 1.0f);
@@ -140,7 +140,7 @@ void hudSystem(SDL_Renderer* r) {
 
     if (gs.phase == Phase::GRADUATION && gs.gradAwaitingSpace && gs.lives > 0) {
         constexpr float scale = 2.0f;
-        const char* msg = "Foul!  Press SPACE to retry graduation";
+        const char* msg = "Foul!  Click to retry graduation";
         const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
             * static_cast<float>(std::strlen(msg));
         SDL_SetRenderDrawColorFloat(r, 1.0f, 0.45f, 0.35f, 1.0f);
@@ -168,9 +168,9 @@ void hudSystem(SDL_Renderer* r) {
     if (gs.phase == Phase::WON || gs.phase == Phase::LOST) {
         char end[96];
         if (gs.phase == Phase::WON)
-            std::snprintf(end, sizeof end, "YOU WON!  avg: %.0f  -  press R", gs.average);
+            std::snprintf(end, sizeof end, "YOU WON!  avg: %.0f", gs.average);
         else
-            std::snprintf(end, sizeof end, "GAME OVER  -  press R");
+            std::snprintf(end, sizeof end, "GAME OVER");
         constexpr float scale = 2.5f;
         const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
             * static_cast<float>(std::strlen(end));

@@ -102,7 +102,7 @@ void physicsStepSystem(float dt) {
             float len = b2Length(v);
             if (len > 0.01f) {
                 constexpr float MIN_SPEED_FACTOR = 0.90f;
-                constexpr float MAX_SPEED_FACTOR = 1.30f;
+                constexpr float MAX_SPEED_FACTOR = 1.55f;
                 constexpr float MIN_VERTICAL_RATIO = 0.35f;
                 const float minSpeed = Config::BALL_SPEED * MIN_SPEED_FACTOR;
                 const float maxSpeed = Config::BALL_SPEED * MAX_SPEED_FACTOR;

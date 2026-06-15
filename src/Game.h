@@ -29,7 +29,7 @@ public:
     bool init(SDL_Renderer* renderer);
     void onKeyDown(int scancode);                     // SDL_Scancode, passed as int
     void onMouseDown(int button, float px, float py); // SDL mouse button + pixel coords
-    void tick(const bool* keys, float dt); // one fixed-timestep simulation step
+    void tick(float dt);                   // one fixed-timestep simulation step
     void draw();                           // render once per frame
     void shutdown();
     bool isPaused()   const;
@@ -37,5 +37,7 @@ public:
 private:
     SDL_Renderer* _renderer = nullptr;
     bool _wantsQuit = false;
+    bool _showGuide = false;
+    bool _showLevelSelect = false;
     void setupScene();
 };

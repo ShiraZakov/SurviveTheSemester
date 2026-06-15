@@ -154,7 +154,7 @@ Entity spawnCourse(int id) {
 Entity spawnGameState() {
     Entity e = Entity::create();
     GameState gs{
-        Config::START_LIVES, Config::START_AVERAGE, Phase::PLAYING, -1, 0, Config::COURSES,
+        Config::START_LIVES, Config::START_AVERAGE, Phase::MENU, -1, 0, Config::COURSES,
         {}, 1, 0.0f, 0.0f, false, false,
         0.0f, 0.0f, 0, 0, 0.0f, false,
         false, 0, 0, 0, 0.0f, Config::WORLD_W * 0.5f, Config::WORLD_W * 0.5f,
