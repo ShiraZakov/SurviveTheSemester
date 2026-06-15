@@ -46,6 +46,8 @@ int main() {
             } else if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 game.onMouseDown((int)ev.button.button,
                                  (float)ev.button.x, (float)ev.button.y);
+            } else if (ev.type == SDL_EVENT_MOUSE_WHEEL) {
+                game.onScroll((float)ev.wheel.y);
             }
         }
         if (game.wantsQuit()) { running = false; continue; }

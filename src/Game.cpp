@@ -9,6 +9,7 @@
 
 #include <SDL3/SDL.h>
 #include <box2d/box2d.h>
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 
@@ -194,28 +195,170 @@ static void drawOverlayPanel(SDL_Renderer* r) {
     SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_NONE);
 }
 
-static void drawGuide(SDL_Renderer* r) {
+enum GuideKind : uint8_t { Section, Header, Bullet, Blank };
+
+struct GuideEntry {
+    const char* text;
+    GuideKind kind;
+};
+
+static constexpr GuideEntry kGuideEntries[] = {
+    {"Stage 1 - Course Breakout",                                Section},
+    {"Controls",                                                 Header},
+    {"Mouse  -  move the paddle",                                Bullet},
+    {"Left click  -  launch the ball",                           Bullet},
+    {"",                                                         Blank },
+    {"Bricks & Drops",                                           Header},
+    {"Hit course bricks to fill the meter",                      Bullet},
+    {"Catch green assignments to advance the meter",             Bullet},
+    {"When a brick clears, catch the falling gold tax",          Bullet},
+    {"",                                                         Blank },
+    {"Average  (starts at 100)",                                 Header},
+    {"Tax caught   ->  average holds",                           Bullet},
+    {"Tax missed   ->  -5",                                      Bullet},
+    {"Ball dropped (foul)  ->  -10, timer pauses until serve",   Bullet},
+    {"",                                                         Blank },
+    {"Time",                                                     Header},
+    {"5 academic years, up to ~30s each",                        Bullet},
+    {"Months progress  Oct  ->  Jul",                            Bullet},
+    {"Timer pauses while the ball is out of play",               Bullet},
+    {"",                                                         Blank },
+    {"Win",                                                      Header},
+    {"Clear every brick,  or",                                   Bullet},
+    {"end with average  >=  60",                                 Bullet},
+    {"",                                                         Blank },
+    {"Lose",                                                     Header},
+    {"0 lives,  or",                                             Bullet},
+    {"year 5 ends without finishing,  or",                       Bullet},
+    {"average drops below 60",                                   Bullet},
+    {"",                                                         Blank },
+    {"",                                                         Blank },
+    {"Stage 2 - Graduation Ceremony",                            Section},
+    {"Goal",                                                     Header},
+    {"Reach the stage by jumping between chair rows",            Bullet},
+    {"",                                                         Blank },
+    {"Controls",                                                 Header},
+    {"Mouse        -  move horizontally",                        Bullet},
+    {"Left click   -  jump to the next row forward",             Bullet},
+    {"Space        -  retry after a foul (if lives remain)",     Bullet},
+    {"",                                                         Blank },
+    {"Obstacles (red blocks)",                                   Header},
+    {"Two blocks slide between rows 0 <-> 1 and 1 <-> 2",        Bullet},
+    {"A block pushing you carries you along the row",            Bullet},
+    {"Pushed off the row edge while carried  ->  foul",          Bullet},
+    {"A block directly above blocks your next jump",             Bullet},
+    {"Constant speed; obstacles do not reset after a foul",      Bullet},
+    {"",                                                         Blank },
+    {"Fouls & Lives",                                            Header},
+    {"Each foul costs one life (no average penalty)",            Bullet},
+    {"Lives left   ->  press Space to retry from the same row",  Bullet},
+    {"0 lives      ->  instant loss",                            Bullet},
+    {"",                                                         Blank },
+    {"Win / Lose",                                               Header},
+    {"Win   -  touch the stage",                                 Bullet},
+    {"Lose  -  out of lives, or year 5 timer ends",              Bullet},
+    {"",                                                         Blank },
+    {"Carry-over from Stage 1",                                  Header},
+    {"Lives and average carry into Stage 2",                     Bullet},
+    {"In Stage 2 only lives matter for fouls",                   Bullet},
+};
+
+static constexpr float kGuideViewportTop    = 140.0f;
+static constexpr float kGuideViewportBottom = 750.0f;
+static constexpr float kGuideViewportLeft   = 110.0f;
+static constexpr float kGuideViewportRight  = static_cast<float>(Config::WINDOW_W) - 130.0f;
+
+static float guideEntryHeight(GuideKind kind) {
+    switch (kind) {
+        case Section: return 64.0f;
+        case Header:  return 46.0f;
+        case Bullet:  return 34.0f;
+        case Blank:   return 18.0f;
+    }
+    return 34.0f;
+}
+
+static float guideContentHeight() {
+    float total = 0.0f;
+    for (const auto& e : kGuideEntries) total += guideEntryHeight(e.kind);
+    return total;
+}
+
+static float guideMaxScroll() {
+    const float viewportH = kGuideViewportBottom - kGuideViewportTop;
+    return std::max(0.0f, guideContentHeight() - viewportH);
+}
+
+static void drawGuideEntry(SDL_Renderer* r, const GuideEntry& e, float y) {
+    if (e.kind == Blank) return;
+    float scale, rr, gg, bb;
+    switch (e.kind) {
+        case Section: scale = 2.4f;  rr = 1.00f; gg = 0.78f; bb = 0.32f; break;
+        case Header:  scale = 1.85f; rr = 0.55f; gg = 0.85f; bb = 1.00f; break;
+        case Bullet:  scale = 1.55f; rr = 0.92f; gg = 0.96f; bb = 1.00f; break;
+        default:                  scale = 1.55f; rr = 1.00f; gg = 1.00f; bb = 1.00f; break;
+    }
+    const float indent = (e.kind == Bullet) ? 36.0f : 0.0f;
+    SDL_SetRenderDrawColorFloat(r, rr, gg, bb, 1.0f);
+    SDL_SetRenderScale(r, scale, scale);
+    SDL_RenderDebugText(r,
+        (kGuideViewportLeft + indent) / scale,
+        y / scale,
+        e.text);
+    SDL_SetRenderScale(r, 1.0f, 1.0f);
+
+    if (e.kind == Section) {
+        const float underlineY = y + 32.0f;
+        SDL_SetRenderDrawColorFloat(r, 1.0f, 0.78f, 0.32f, 0.55f);
+        SDL_FRect underline{kGuideViewportLeft, underlineY,
+                            kGuideViewportRight - kGuideViewportLeft, 2.0f};
+        SDL_RenderFillRect(r, &underline);
+    }
+}
+
+static void drawGuideScrollbar(SDL_Renderer* r, float scroll, float maxScroll) {
+    if (maxScroll <= 0.0f) return;
+    const float viewportH = kGuideViewportBottom - kGuideViewportTop;
+    const float contentH  = guideContentHeight();
+    constexpr float trackW = 10.0f;
+    const float trackX = kGuideViewportRight + 18.0f;
+
+    SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColorFloat(r, 0.18f, 0.22f, 0.32f, 0.70f);
+    SDL_FRect track{trackX, kGuideViewportTop, trackW, viewportH};
+    SDL_RenderFillRect(r, &track);
+
+    const float thumbH = std::max(48.0f, viewportH * (viewportH / contentH));
+    const float thumbY = kGuideViewportTop + (viewportH - thumbH) * (scroll / maxScroll);
+    SDL_SetRenderDrawColorFloat(r, 0.55f, 0.72f, 1.0f, 0.95f);
+    SDL_FRect thumb{trackX, thumbY, trackW, thumbH};
+    SDL_RenderFillRect(r, &thumb);
+    SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_NONE);
+}
+
+static void drawGuide(SDL_Renderer* r, float scroll) {
     drawOverlayPanel(r);
-    drawCenteredText(r, "How to Play", 70.0f, 3.0f, 1.0f, 0.95f, 0.35f);
+    drawCenteredText(r, "How to Play", 55.0f, 3.0f, 1.0f, 0.95f, 0.35f);
 
-    const char* lines[] = {
-        "Stage 1 - Course Breakout:",
-        "Move the paddle with the mouse and click to launch the ball.",
-        "Break course bricks, catch assignments, and avoid losing lives.",
-        "Clear courses before academic years run out.",
-        "",
-        "Exam / Graduation Stage:",
-        "Use the mouse to move through the graduation challenge.",
-        "Click to jump/advance when prompted by the stage.",
-        "Avoid obstacles and fouls. Losing all lives ends the game.",
-        "",
-        "Win by finishing the final stage. Lose when lives reach zero."
-    };
-    SDL_SetRenderDrawColorFloat(r, 0.92f, 0.96f, 1.0f, 1.0f);
-    for (int i = 0; i < 11; ++i)
-        SDL_RenderDebugText(r, 190.0f, 150.0f + static_cast<float>(i) * 32.0f, lines[i]);
+    const float maxScroll = guideMaxScroll();
+    const float clamped   = std::clamp(scroll, 0.0f, maxScroll);
 
-    drawButton(r, centeredButton(720.0f, "Back"));
+    // No SDL clip rect here: SDL3 stores clip in logical coords, so per-line
+    // SetRenderScale shifts the clip horizontally and chops the first chars.
+    // Skip lines that don't fully fit; partial lines simply don't draw.
+    float cursorY = kGuideViewportTop - clamped;
+    for (const auto& e : kGuideEntries) {
+        const float h = guideEntryHeight(e.kind);
+        if (cursorY >= kGuideViewportTop && cursorY + h <= kGuideViewportBottom)
+            drawGuideEntry(r, e, cursorY);
+        cursorY += h;
+    }
+
+    drawGuideScrollbar(r, clamped, maxScroll);
+
+    drawCenteredText(r, "scroll to read more", 770.0f, 1.15f,
+                     0.72f, 0.78f, 0.92f);
+    drawButton(r, centeredButton(800.0f, "Back"));
 }
 
 static void drawLevelSelect(SDL_Renderer* r) {
@@ -227,9 +370,9 @@ static void drawLevelSelect(SDL_Renderer* r) {
     drawButton(r, centeredButton(510.0f, "Back"));
 }
 
-static void drawMenu(SDL_Renderer* r, bool showGuide, bool showLevelSelect) {
+static void drawMenu(SDL_Renderer* r, bool showGuide, bool showLevelSelect, float guideScroll) {
     if (showGuide) {
-        drawGuide(r);
+        drawGuide(r, guideScroll);
         return;
     }
     if (showLevelSelect) {
@@ -285,6 +428,12 @@ void SurviveGame::onKeyDown(int sc) {
     }
 }
 
+void SurviveGame::onScroll(float dy) {
+    if (gameState().phase != Phase::MENU || !_showGuide) return;
+    constexpr float kScrollStep = 40.0f;
+    _guideScroll = std::clamp(_guideScroll - dy * kScrollStep, 0.0f, guideMaxScroll());
+}
+
 bool SurviveGame::isPaused() const {
     return gameState().paused;
 }
@@ -299,7 +448,10 @@ void SurviveGame::onMouseDown(int button, float px, float py) {
 
     if (gs.phase == Phase::MENU) {
         if (_showGuide) {
-            if (inside(centeredButton(720.0f, "Back"), px, py)) _showGuide = false;
+            if (inside(centeredButton(800.0f, "Back"), px, py)) {
+                _showGuide = false;
+                _guideScroll = 0.0f;
+            }
             return;
         }
         if (_showLevelSelect) {
@@ -318,6 +470,7 @@ void SurviveGame::onMouseDown(int button, float px, float py) {
             startStageOne();
         } else if (inside(centeredButton(410.0f, "Game Guide"), px, py)) {
             _showGuide = true;
+            _guideScroll = 0.0f;
         } else if (inside(centeredButton(490.0f, "Choose Level"), px, py)) {
             _showLevelSelect = true;
         }
@@ -398,7 +551,7 @@ void SurviveGame::draw() {
     hudSystem(_renderer);
     GameState& gs = gameState();
     if (gs.phase == Phase::MENU)
-        drawMenu(_renderer, _showGuide, _showLevelSelect);
+        drawMenu(_renderer, _showGuide, _showLevelSelect, _guideScroll);
     else if (gs.phase == Phase::WON || gs.phase == Phase::LOST)
         drawEndScreen(_renderer, gs.phase, gs.average);
     SDL_RenderPresent(_renderer);
