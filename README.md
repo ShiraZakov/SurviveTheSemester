@@ -20,17 +20,6 @@ exams, and maintain a passing average — all before the academic years run out.
 
 ---
 
-## Team
-
-| Member | Responsibility |
-|--------|---------------|
-| Shira | Engine core, physics integration, game loop, win/lose logic |
-| Aviel | Ball, paddle, brick collisions, render system |
-| May | Courses, drops, progress tracking, HUD |
-| Yuval | Exam phase, academic hazards |
-
----
-
 ## Gameplay
 
 See [GAME_RULES.md](GAME_RULES.md) for the full rules.
