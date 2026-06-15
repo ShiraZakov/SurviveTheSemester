@@ -6,6 +6,8 @@
 *.user
 .DS_Store
 Thumbs.db
+.idea/*.iml
+.idea/editor.xml
 
 # Local AI assistant context — not part of the project source
 CLAUDE.md
