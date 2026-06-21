@@ -71,22 +71,32 @@ void gameStateSystem() {
     }
 
     if (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM) {
-        if (gs.lives <= 0)
+        if (gs.lives <= 0) {
             gs.phase = Phase::LOST;
-        else if (allBricksCleared()) {
-            gs.phase = Phase::GRADUATION;
-            gs.started = true;
-            gs.yearsExhausted = false;
-            enterGraduationStage();
+            gs.loseReason = LoseReason::NoLives;
+        } else if (allBricksCleared()) {
+            if (gs.average < Config::PASS) {
+                gs.phase = Phase::LOST;
+                gs.loseReason = LoseReason::Stage1AvgTooLow;
+            } else {
+                gs.phase = Phase::GRADUATION;
+                gs.started = true;
+                gs.yearsExhausted = false;
+                enterGraduationStage();
+            }
+        } else if (gs.yearsExhausted) {
+            gs.phase = Phase::LOST;
+            gs.loseReason = LoseReason::YearsExhausted;
+        } else if (gs.coursesTotal > 0 && gs.coursesDone >= gs.coursesTotal
+                 && gs.average < Config::PASS) {
+            gs.phase = Phase::LOST;
+            gs.loseReason = LoseReason::AverageTooLow;
         }
-        else if (gs.yearsExhausted)
-            gs.phase = Phase::LOST;
-        else if (gs.coursesTotal > 0 && gs.coursesDone >= gs.coursesTotal
-                 && gs.average < Config::PASS)
-            gs.phase = Phase::LOST;
 
-        if (gs.phase == Phase::LOST || gs.phase == Phase::WON)
+        if (gs.phase == Phase::LOST || gs.phase == Phase::WON) {
             gs.started = false;
+            gs.paused = false;
+        }
     } else if (gs.phase == Phase::GRADUATION && gs.lives <= 0) {
         graduationOnLivesDepleted();
     }

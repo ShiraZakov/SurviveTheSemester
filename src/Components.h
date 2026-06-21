@@ -40,6 +40,7 @@ struct GameState {
     std::array<int8_t, COURSE_GRADES> taxOutcome; // per-course tax result
     int   currentYear;      // 1..YEAR_COUNT
     float yearTimer;        // seconds elapsed in current year
+    float yearAnnounceTimer; // >0: freeze gameplay and show year transition overlay
     float totalTime;        // total elapsed seconds (score: lower is better)
     bool  yearsExhausted;   // true when year 5 ended without clearing everything
     bool  started;          // false until first Space launch; timers wait for this
@@ -64,7 +65,8 @@ struct GameState {
     int   gradFouls;
     bool  gradBeingDragged;
     bool  gradAwaitingSpace;
-    bool  paused = false;   // true while the ESC pause menu is shown
+    bool  paused = false;   // true while gameplay is frozen (pause button / ESC / P)
+    LoseReason loseReason = LoseReason::None;
 };
 
 // ---- Tags (empty; checked via has<>(), never get<>()) ----

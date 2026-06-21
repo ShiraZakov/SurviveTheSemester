@@ -38,23 +38,28 @@ ent_type phys::entityOf(b2BodyId b) {
 
 void phys::setVelocity(ent_type e, float vx, float vy) {
     Entity en{e};
-    if (en.has<PhysicsBody>())
-        b2Body_SetLinearVelocity(en.get<PhysicsBody>().body, {vx, vy});
+    if (!en.has<PhysicsBody>()) return;
+    b2BodyId body = en.get<PhysicsBody>().body;
+    if (!b2Body_IsValid(body)) return;
+    b2Body_SetLinearVelocity(body, {vx, vy});
 }
 
 void phys::getVelocity(ent_type e, float& vx, float& vy) {
     vx = vy = 0.0f;
     Entity en{e};
-    if (en.has<PhysicsBody>()) {
-        b2Vec2 v = b2Body_GetLinearVelocity(en.get<PhysicsBody>().body);
-        vx = v.x; vy = v.y;
-    }
+    if (!en.has<PhysicsBody>()) return;
+    b2BodyId body = en.get<PhysicsBody>().body;
+    if (!b2Body_IsValid(body)) return;
+    b2Vec2 v = b2Body_GetLinearVelocity(body);
+    vx = v.x; vy = v.y;
 }
 
 void phys::setPosition(ent_type e, float x, float y) {
     Entity en{e};
-    if (en.has<PhysicsBody>())
-        b2Body_SetTransform(en.get<PhysicsBody>().body, {x, y}, b2Rot_identity);
+    if (!en.has<PhysicsBody>()) return;
+    b2BodyId body = en.get<PhysicsBody>().body;
+    if (!b2Body_IsValid(body)) return;
+    b2Body_SetTransform(body, {x, y}, b2Rot_identity);
 }
 
 /// @brief Destroys the Box2D body attached to an entity, if one exists
@@ -63,8 +68,14 @@ void phys::setPosition(ent_type e, float x, float y) {
 void phys::destroyBody(ent_type e) {
     if (!B2_IS_NON_NULL(g_world)) return;
     Entity en{e};
-    if (en.has<PhysicsBody>())
-        b2DestroyBody(en.get<PhysicsBody>().body);
+    if (!en.has<PhysicsBody>()) return;
+    b2BodyId body = en.get<PhysicsBody>().body;
+    if (!b2Body_IsValid(body)) {
+        en.del<PhysicsBody>();
+        return;
+    }
+    b2DestroyBody(body);
+    en.del<PhysicsBody>();
 }
 
 /// @brief Steps the Box2D world and syncs Position components from body transforms.
@@ -83,7 +94,11 @@ void physicsStepSystem(float dt) {
             .build();
         static int q = World::createQuery(mask);
         for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-            b2Vec2 p = b2Body_GetPosition(e.get<PhysicsBody>().body);
+            if (e.has<DeadTag>()) continue;
+            if (!e.has<PhysicsBody>()) continue;
+            b2BodyId body = e.get<PhysicsBody>().body;
+            if (!b2Body_IsValid(body)) continue;
+            b2Vec2 p = b2Body_GetPosition(body);
             e.get<Position>() = {p.x, p.y};
         }
     }
@@ -97,7 +112,10 @@ void physicsStepSystem(float dt) {
             .build();
         static int q = World::createQuery(mask);
         for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+            if (e.has<DeadTag>()) continue;
+            if (!e.has<PhysicsBody>()) continue;
             b2BodyId b = e.get<PhysicsBody>().body;
+            if (!b2Body_IsValid(b)) continue;
             b2Vec2 v = b2Body_GetLinearVelocity(b);
             float len = b2Length(v);
             if (len > 0.01f) {
@@ -137,6 +155,7 @@ static void onContactPair(ent_type a, ent_type b) {
     else return;
 
     if (other.has<BrickTag>() && other.has<BrickInfo>()) {
+        if (other.has<DeadTag>()) return;
         if (!brickIsPlayable(other)) return;
         ev::courseHit(other.get<BrickInfo>().courseId, other.entity());
     }

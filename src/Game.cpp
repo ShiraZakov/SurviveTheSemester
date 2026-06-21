@@ -42,13 +42,8 @@ void eventCleanupSystem() {
 }
 
 static void clearAll() {
-    bagel::Bag<ent_type, 256> all;
-    for (Entity e = Entity::first(); !e.eof(); e.next())
-        if (e.mask().ctz() >= 0) all.push(e.entity());
-    for (int i = 0; i < all.size(); ++i) {
-        phys::destroyBody(all[i]);
-        Entity(all[i]).destroy();
-    }
+    destroyAllEntities();
+    phys::shutdown();
 }
 
 #ifdef DEBUG_GRADUATION_STAGE
@@ -68,36 +63,12 @@ static void setupGraduationPreview() {
 #endif
 
 void SurviveGame::setupScene() {
-    bindGameState(spawnGameState().entity());
-
 #ifdef DEBUG_GRADUATION_STAGE
+    bindGameState(spawnGameState().entity());
     setupGraduationPreview();
     return;
 #endif
-
-    const float W = Config::WORLD_W, H = Config::WORLD_H, t = Config::WALL;
-    spawnWall(W * 0.5f, t * 0.5f,     W, t);   // top
-    spawnWall(W * 0.5f, H - t * 0.5f, W, t);   // bottom (closed for the core smoke test)
-    spawnWall(t * 0.5f, H * 0.5f,     t, H);   // left
-    spawnWall(W - t * 0.5f, H * 0.5f, t, H);   // right
-
-    for (int c = 0; c < Config::COURSES; ++c) spawnCourse(c);
-
-    const float bw = Config::BRICK_W, bh = Config::BRICK_H, gap = Config::BRICK_GAP;
-    const float gridW = Config::brickGridWidth();
-    const float startX = (W - gridW) * 0.5f + bw * 0.5f;
-    const float startY = 3.2f;
-    for (int row = 0; row < Config::COURSES; ++row)
-        for (int col = 0; col < Config::BRICK_COLS; ++col) {
-            float x = startX + col * (bw + gap);
-            float y = startY + row * (bh + gap * 0.5f);
-            const int courseIndex = Config::gridCourseIndex(row, col);
-            spawnBrick(row, courseIndex, x, y);
-        }
-
-    const float paddleY = Config::paddleY();
-    spawnPaddle(W * 0.5f, paddleY);
-    spawnBall(W * 0.5f, paddleY + Config::PADDLE_H * 0.5f - Config::PADDLE_VISUAL_H - Config::BALL_RADIUS + 0.3f);
+    setupFreshPlayScene();
 }
 
 bool SurviveGame::init(SDL_Renderer* renderer) {
@@ -224,8 +195,9 @@ static constexpr GuideEntry kGuideEntries[] = {
     {"Timer pauses while the ball is out of play",               Bullet},
     {"",                                                         Blank },
     {"Win",                                                      Header},
-    {"Clear every brick,  or",                                   Bullet},
-    {"end with average  >=  60",                                 Bullet},
+    {"Clear every brick with average >= 60",                      Bullet},
+    {"  -> unlocks Stage 2 (Graduation)",                        Bullet},
+    {"Or end with average >= 60 before time runs out",           Bullet},
     {"",                                                         Blank },
     {"Lose",                                                     Header},
     {"0 lives,  or",                                             Bullet},
@@ -388,35 +360,68 @@ static void drawMenu(SDL_Renderer* r, bool showGuide, bool showLevelSelect, floa
     drawButton(r, centeredButton(490.0f, "Choose Level"));
 }
 
-static void drawEndScreen(SDL_Renderer* r, Phase phase, float average) {
+static float endScreenPlayAgainY(LoseReason loseReason) {
+    switch (loseReason) {
+    case LoseReason::Stage1AvgTooLow: return 380.0f;
+    default: return 340.0f;
+    }
+}
+
+static float endScreenExitY(LoseReason loseReason) {
+    switch (loseReason) {
+    case LoseReason::Stage1AvgTooLow: return 460.0f;
+    default: return 420.0f;
+    }
+}
+
+static void drawEndScreen(SDL_Renderer* r, Phase phase, float average, LoseReason loseReason) {
     drawOverlayPanel(r);
     if (phase == Phase::WON) {
         char msg[96];
         std::snprintf(msg, sizeof msg, "You Won! Average: %.0f", average);
         drawCenteredText(r, msg, 170.0f, 3.0f, 0.35f, 1.0f, 0.40f);
     } else {
-        drawCenteredText(r, "Game Over", 170.0f, 3.2f, 1.0f, 0.30f, 0.25f);
+        drawCenteredText(r, "Game Over", 130.0f, 3.2f, 1.0f, 0.30f, 0.25f);
+        switch (loseReason) {
+        case LoseReason::Stage1AvgTooLow: {
+            char reason[96];
+            std::snprintf(reason, sizeof reason,
+                "Average below 60 (yours: %.0f). Need 60 to graduate.", average);
+            drawCenteredText(r, reason, 205.0f, 1.45f, 1.0f, 0.85f, 0.35f);
+            drawCenteredText(r, "Stage 2 not unlocked.", 255.0f, 1.7f, 1.0f, 0.45f, 0.35f);
+            break;
+        }
+        case LoseReason::AverageTooLow:
+            drawCenteredText(r, "Average dropped below 60.", 205.0f, 1.6f, 1.0f, 0.85f, 0.35f);
+            break;
+        case LoseReason::YearsExhausted:
+            drawCenteredText(r, "Year 5 ended before you finished.", 205.0f, 1.5f, 1.0f, 0.85f, 0.35f);
+            break;
+        case LoseReason::NoLives:
+            drawCenteredText(r, "Out of lives.", 205.0f, 1.6f, 1.0f, 0.85f, 0.35f);
+            break;
+        default:
+            break;
+        }
     }
-    drawButton(r, centeredButton(340.0f, "Play Again"));
-    drawButton(r, centeredButton(420.0f, "Exit"));
+    drawButton(r, centeredButton(endScreenPlayAgainY(loseReason), "Play Again"));
+    drawButton(r, centeredButton(endScreenExitY(loseReason), "Exit"));
 }
 
 void SurviveGame::onKeyDown(int sc) {
     GameState& gs = gameState();
 
-    // Handle pause menu keys first
     if (gs.paused) {
-        if (sc == SDL_SCANCODE_Y) { _wantsQuit = true; }
-        if (sc == SDL_SCANCODE_N) { gs.paused = false; }
+        if (sc == SDL_SCANCODE_ESCAPE || sc == SDL_SCANCODE_P)
+            gs.paused = false;
         return;
     }
 
     switch (sc) {
-        case SDL_SCANCODE_ESCAPE: {
-            if (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM
-                    || gs.phase == Phase::GRADUATION) {
+        case SDL_SCANCODE_ESCAPE:
+        case SDL_SCANCODE_P: {
+            if (hudPauseButtonAvailable())
                 gs.paused = true;
-            }
             break;
         }
         // Debug-hotkey synthesizer: lets each vertical be exercised solo.
@@ -445,6 +450,28 @@ bool SurviveGame::wantsQuit() const {
 void SurviveGame::onMouseDown(int button, float px, float py) {
     if (button != SDL_BUTTON_LEFT) return;
     GameState& gs = gameState();
+    if (gs.yearAnnounceTimer > 0.0f) return;
+
+    if (hudPauseButtonHit(px, py)) {
+        gs.paused = !gs.paused;
+        return;
+    }
+
+    if (gs.phase == Phase::WON || gs.phase == Phase::LOST) {
+        const LoseReason reason = gs.loseReason;
+        if (inside(centeredButton(endScreenPlayAgainY(reason), "Play Again"), px, py)) {
+            playAgainRestart();
+            startStageOne();
+            _showGuide = false;
+            _showLevelSelect = false;
+            _guideScroll = 0.0f;
+        } else if (inside(centeredButton(endScreenExitY(reason), "Exit"), px, py)) {
+            _wantsQuit = true;
+        }
+        return;
+    }
+
+    if (gs.paused) return;
 
     if (gs.phase == Phase::MENU) {
         if (_showGuide) {
@@ -477,31 +504,6 @@ void SurviveGame::onMouseDown(int button, float px, float py) {
         return;
     }
 
-    if (gs.phase == Phase::WON || gs.phase == Phase::LOST) {
-        if (inside(centeredButton(340.0f, "Play Again"), px, py)) {
-            clearAll();
-            setupScene();
-            _showGuide = false;
-            _showLevelSelect = false;
-        } else if (inside(centeredButton(420.0f, "Exit"), px, py)) {
-            _wantsQuit = true;
-        }
-        return;
-    }
-
-    if (gs.paused) {
-        // YES button region (centered ~35% from left)
-        constexpr float btnY  = Config::WINDOW_H * 0.60f;
-        constexpr float yesCX = Config::WINDOW_W * 0.5f - 120.0f;
-        constexpr float noCX  = Config::WINDOW_W * 0.5f + 120.0f;
-        constexpr float hw = 80.0f, hh = 22.0f;
-        if (px >= yesCX - hw && px <= yesCX + hw && py >= btnY - hh && py <= btnY + hh)
-            _wantsQuit = true;
-        else if (px >= noCX - hw && px <= noCX + hw && py >= btnY - hh && py <= btnY + hh)
-            gs.paused = false;
-        return;
-    }
-
     if (gs.phase == Phase::PLAYING && !gs.started) {
         launchBallAndStart();
         return;
@@ -515,6 +517,16 @@ void SurviveGame::onMouseDown(int button, float px, float py) {
 
 void SurviveGame::tick(float dt) {
     GameState& gs = gameState();
+    if (gs.paused && !hudPauseButtonAvailable())
+        gs.paused = false;
+
+    if (gs.yearAnnounceTimer > 0.0f) {
+        yearSystem(dt);
+        eventCleanupSystem();
+        deadCleanupSystem();
+        return;
+    }
+
     if (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM) {
         inputSystem(dt, _renderer);
         physicsStepSystem(dt);
@@ -553,6 +565,6 @@ void SurviveGame::draw() {
     if (gs.phase == Phase::MENU)
         drawMenu(_renderer, _showGuide, _showLevelSelect, _guideScroll);
     else if (gs.phase == Phase::WON || gs.phase == Phase::LOST)
-        drawEndScreen(_renderer, gs.phase, gs.average);
+        drawEndScreen(_renderer, gs.phase, gs.average, gs.loseReason);
     SDL_RenderPresent(_renderer);
 }

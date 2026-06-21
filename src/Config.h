@@ -64,7 +64,8 @@ namespace Config {
         return credits[courseIndex];
     }
     constexpr int   YEAR_COUNT   = 5;
-    constexpr float YEAR_SECONDS = 45.0f;    // advance year when year courses done OR this elapses
+    constexpr float YEAR_SECONDS = 45.0f;    // advance year when this elapses (independent of bricks)
+    constexpr float YEAR_ANNOUNCE_SECONDS = 5.0f; // gameplay freeze while showing new year
     constexpr int   ACADEMIC_MONTHS = 10;  // Oct..Jul
     constexpr float MONTH_SECONDS = YEAR_SECONDS / static_cast<float>(ACADEMIC_MONTHS);
 

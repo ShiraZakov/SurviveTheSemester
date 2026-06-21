@@ -14,6 +14,7 @@ add_executable(SurviveTheSemester
         bagel.h
         src/main.cpp
         src/Game.cpp
+        src/GameRestart.cpp
         src/GameStateAccess.cpp
         src/Physics.cpp
         src/EntityFactory.cpp
@@ -101,3 +102,37 @@ target_include_directories(graduation_year_tests PRIVATE
         ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(graduation_year_tests PRIVATE SDL3-static SDL3_image-static box2d)
 add_test(NAME graduation_year_tests COMMAND graduation_year_tests)
+
+add_executable(year_announce_tests
+        tests/test_year_announce.cpp
+        src/GameStateAccess.cpp
+        src/systems/year.cpp
+        src/systems/graduation.cpp
+        src/systems/cleanup.cpp
+        src/EntityFactory.cpp
+        src/Physics.cpp
+        src/Sprites.cpp
+        src/systems/brick_progress.cpp
+)
+target_include_directories(year_announce_tests PRIVATE
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(year_announce_tests PRIVATE SDL3-static SDL3_image-static box2d)
+add_test(NAME year_announce_tests COMMAND year_announce_tests)
+
+add_executable(play_again_reset_tests
+        tests/test_play_again_reset.cpp
+        src/GameRestart.cpp
+        src/GameStateAccess.cpp
+        src/systems/graduation.cpp
+        src/systems/cleanup.cpp
+        src/EntityFactory.cpp
+        src/Physics.cpp
+        src/Sprites.cpp
+        src/systems/brick_progress.cpp
+)
+target_include_directories(play_again_reset_tests PRIVATE
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(play_again_reset_tests PRIVATE SDL3-static SDL3_image-static box2d)
+add_test(NAME play_again_reset_tests COMMAND play_again_reset_tests)

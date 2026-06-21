@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "EntityFactory.h"
 #include "Events.h"
+#include "Physics.h"
 #include "Sprites.h"
 
 using bagel::Entity;
@@ -73,6 +74,7 @@ static void clearBrick(Entity brick) {
     const auto& pos  = brick.get<Position>();
     ev::brickCleared(info.courseId, info.courseIndex);
     spawnDrop(info.courseId, info.courseIndex, pos.x, pos.y, DropType::Tax, brick.entity());
+    phys::destroyBody(brick.entity());
     brick.add(DeadTag{});
 }
 
@@ -86,6 +88,7 @@ static void tryAdvanceBrick(Entity brick) {
     if (prog.filled < prog.max) return;
 
     prog.clearDelay = Config::BRICK_CLEAR_DELAY;
+    phys::destroyBody(brick.entity());
 }
 
 /// @brief Counts down clearDelay timers on full bricks; destroys brick + spawns Tax

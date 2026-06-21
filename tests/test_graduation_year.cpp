@@ -26,7 +26,7 @@ static GameState& bindFreshGameState() {
     Entity e = Entity::create();
     GameState gs{
         Config::START_LIVES, Config::START_AVERAGE, Phase::GRADUATION, -1, 0, Config::COURSES,
-        {}, 5, 0.0f, 0.0f, false, true,
+        {}, 5, 0.0f, 0.0f, 0.0f, false, true,
         0.0f, 0.0f, 0, 0, 0.0f, false, 0,
         true, 0, Config::graduationChairTotal(), 0, 0.0f,
         Config::WORLD_W * 0.5f, Config::WORLD_W * 0.5f,
@@ -79,6 +79,7 @@ static void test_graduation_year_advances_before_year5() {
     yearSystem(0.0f);
     assert(gs.currentYear == 4);
     assert(gs.yearTimer == 0.0f);
+    assert(gs.yearAnnounceTimer == Config::YEAR_ANNOUNCE_SECONDS);
     assert(gs.phase == Phase::GRADUATION);
 }
 

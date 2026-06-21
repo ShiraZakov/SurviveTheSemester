@@ -86,23 +86,25 @@ static void drawEntity(SDL_Renderer* r, Entity e) {
     }
 
     if (e.has<SpritePart>()) {
-        if (!sprites::ready()) return;
-        const SpritePart sp = e.get<SpritePart>();
-        const SDL_FRect dest = spriteDest(e, p.x, drawY, s.w, s.h, sp);
-        sprites::drawPart(r, sp, dest);
-        if (e.has<BrickProgress>()) {
-            const auto& prog = e.get<BrickProgress>();
-            if (!prog.unlocked) return;
-            const float mw = s.w * Config::PPM * 0.55f;
-            const float mh = prog.max == 5 ? 10.0f : 12.0f;
-            const float mx = (p.x * Config::PPM) - mw * 0.5f;
-            const float my = (drawY + s.h * 0.5f) * Config::PPM - mh - 4.0f;
-            if (prog.max == 5)
-                sprites::drawMeter5(r, prog.filled, prog.max, mx, my, mw, mh);
-            else
-                sprites::drawMeter3(r, prog.filled, prog.max, mx, my, mw, mh);
+        if (sprites::ready()) {
+            const SpritePart sp = e.get<SpritePart>();
+            const SDL_FRect dest = spriteDest(e, p.x, drawY, s.w, s.h, sp);
+            sprites::drawPart(r, sp, dest);
+            if (e.has<BrickProgress>()) {
+                const auto& prog = e.get<BrickProgress>();
+                if (!prog.unlocked) return;
+                const float mw = s.w * Config::PPM * 0.55f;
+                const float mh = prog.max == 5 ? 10.0f : 12.0f;
+                const float mx = (p.x * Config::PPM) - mw * 0.5f;
+                const float my = (drawY + s.h * 0.5f) * Config::PPM - mh - 4.0f;
+                if (prog.max == 5)
+                    sprites::drawMeter5(r, prog.filled, prog.max, mx, my, mw, mh);
+                else
+                    sprites::drawMeter3(r, prog.filled, prog.max, mx, my, mw, mh);
+            }
+            return;
         }
-        return;
+        // Fall through to Drawable fallback if textures are unavailable.
     }
 
     SDL_SetRenderDrawColorFloat(r, d.r, d.g, d.b, d.a);
@@ -127,6 +129,7 @@ void renderSystem(SDL_Renderer* r) {
 
     for (Entity e = Entity::first(); !e.eof(); e.next()) {
         if (e.mask().ctz() < 0) continue;
+        if (e.has<DeadTag>()) continue;
         if (!e.has<Position>() || !e.has<Size>() || !e.has<Drawable>()) continue;
         if (e.has<GradStudentTag>()) continue;
         drawEntity(r, e);
@@ -134,6 +137,7 @@ void renderSystem(SDL_Renderer* r) {
 
     for (Entity e = Entity::first(); !e.eof(); e.next()) {
         if (e.mask().ctz() < 0) continue;
+        if (e.has<DeadTag>()) continue;
         if (!e.has<Position>() || !e.has<Size>() || !e.has<Drawable>()) continue;
         if (!e.has<GradStudentTag>()) continue;
         drawEntity(r, e);

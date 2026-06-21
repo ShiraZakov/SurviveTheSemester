@@ -23,6 +23,9 @@ inline int countCaughtTax(const GameState& gs) {
 // Core cleanup systems (owned by SHIRA, run at end of each frame).
 void eventCleanupSystem();   // deletes all event entities
 void deadCleanupSystem();    // destroys bodies + entities tagged DeadTag
+void destroyAllEntities();   // Play Again: wipe every live entity
+void setupFreshPlayScene();  // Play Again: new GameState + stage-1 scene
+void playAgainRestart();     // destroy entities, reset physics, spawn stage 1
 
 class SurviveGame {
 public:

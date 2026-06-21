@@ -26,6 +26,9 @@ void renderSystem(SDL_Renderer* r);            // AVIEL
 void dropSystem(float dt);                     // MAY
 void courseProgressSystem();                   // MAY    (consumes CourseHit/DropCaught)
 void hudSystem(SDL_Renderer* r);               // MAY
+bool hudPauseButtonVisible(Phase phase);
+bool hudPauseButtonAvailable();
+bool hudPauseButtonHit(float px, float py);
 
 void examSystem(float dt);                     // YUVAL  (consumes ExamStarted -> ExamFinished)
 

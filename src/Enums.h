@@ -2,6 +2,7 @@
 // Shared enums
 
 enum class Phase       { MENU, PLAYING, EXAM, GRADUATION, WON, LOST };
+enum class LoseReason  { None, NoLives, YearsExhausted, AverageTooLow, Stage1AvgTooLow };
 enum class CourseState { LOCKED, ACTIVE, DONE };
 enum class DropType    { Assignment, Bonus, Tax };
 enum class Shape       { Rect, Circle };
