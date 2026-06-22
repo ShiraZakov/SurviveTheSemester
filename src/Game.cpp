@@ -41,7 +41,12 @@ void eventCleanupSystem() {
     bagel::StaticBag<ent_type, 128> dead;
     for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
         dead.push(e.entity());
-    for (int i = 0; i < dead.size(); ++i) Entity(dead[i]).destroy();
+    // Skip ids already destroyed this drain: a persistent query can list the
+    // same id twice, and freeing an id twice corrupts the recycle stack.
+    for (int i = 0; i < dead.size(); ++i) {
+        if (Entity(dead[i]).mask().ctz() < 0) continue;
+        Entity(dead[i]).destroy();
+    }
 }
 
 static void clearAll() {

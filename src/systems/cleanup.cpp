@@ -20,6 +20,12 @@ void deadCleanupSystem() {
     for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
         dead.push(e.entity());
     for (int i = 0; i < dead.size(); ++i) {
+        // A persistent query can list the same id twice (BAGEL pushes on add
+        // without de-duping, and a recycled id can re-add over a stale entry).
+        // Skip ids already destroyed this drain so we never free an id twice
+        // (a double-free corrupts the recycle stack and collapses two later
+        // spawns onto one id).
+        if (Entity(dead[i]).mask().ctz() < 0) continue;
         phys::destroyBody(dead[i]);
         Entity(dead[i]).destroy();
     }
