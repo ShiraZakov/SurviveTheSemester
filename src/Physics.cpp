@@ -95,8 +95,7 @@ void physicsStepSystem(float dt) {
             .build();
         static int q = World::createQuery(mask);
         for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-            if (e.has<DeadTag>()) continue;
-            if (!e.has<PhysicsBody>()) continue;
+            if (e.has<DeadTag>()) continue;   // dead entities linger in the query until cleanup
             b2BodyId body = e.get<PhysicsBody>().body;
             if (!b2Body_IsValid(body)) continue;
             b2Vec2 p = b2Body_GetPosition(body);
@@ -113,8 +112,7 @@ void physicsStepSystem(float dt) {
             .build();
         static int q = World::createQuery(mask);
         for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-            if (e.has<DeadTag>()) continue;
-            if (!e.has<PhysicsBody>()) continue;
+            if (e.has<DeadTag>()) continue;   // dead entities linger in the query until cleanup
             b2BodyId b = e.get<PhysicsBody>().body;
             if (!b2Body_IsValid(b)) continue;
             b2Vec2 v = b2Body_GetLinearVelocity(b);
