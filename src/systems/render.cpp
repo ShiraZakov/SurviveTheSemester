@@ -126,19 +126,17 @@ void renderSystem(SDL_Renderer* r) {
         sprites::drawGraduationStage(r);
     }
 
+    // Single pass: draw the scene immediately and defer grad students so they
+    // still layer on top. Order within each group stays id-ascending, identical
+    // to the previous two-pass version (only one full-world walk now).
+    bagel::StaticBag<bagel::ent_type, 128> students;
     for (Entity e = Entity::first(); !e.eof(); e.next()) {
         if (e.mask().ctz() < 0) continue;
         if (e.has<DeadTag>()) continue;
         if (!e.has<Position>() || !e.has<Size>() || !e.has<Drawable>()) continue;
-        if (e.has<GradStudentTag>()) continue;
+        if (e.has<GradStudentTag>()) { students.push(e.entity()); continue; }
         drawEntity(r, e);
     }
-
-    for (Entity e = Entity::first(); !e.eof(); e.next()) {
-        if (e.mask().ctz() < 0) continue;
-        if (e.has<DeadTag>()) continue;
-        if (!e.has<Position>() || !e.has<Size>() || !e.has<Drawable>()) continue;
-        if (!e.has<GradStudentTag>()) continue;
-        drawEntity(r, e);
-    }
+    for (int i = 0; i < students.size(); ++i)
+        drawEntity(r, Entity(students[i]));
 }
