@@ -46,6 +46,17 @@ static void clearAll() {
     phys::shutdown();
 }
 
+/// @brief True when at least one BrickCleared event exists this frame. Prerequisite
+///        state only changes when a brick clears, so the scheduler uses this to skip
+///        brickUnlockSystem (a full-world prereq recompute) on the vast majority of
+///        frames where nothing was cleared.
+static bool anyBrickClearedThisFrame() {
+    static const Mask mask = MaskBuilder().set<BrickCleared>().build();
+    static int q = World::createQuery(mask);
+    World::first(q);   // forces lazy cleanup of stale entries before the eof check
+    return !World::eof(q);
+}
+
 #ifdef DEBUG_GRADUATION_STAGE
 static void setupGraduationPreview() {
     const float W = Config::WORLD_W, H = Config::WORLD_H, t = Config::WALL;
@@ -539,11 +550,16 @@ void SurviveGame::tick(float dt) {
         brickClearDelaySystem(dt);
         courseHitSystem();
         dropSystem(dt);
-        brickUnlockSystem();
+        if (anyBrickClearedThisFrame())
+            brickUnlockSystem();
         courseProgressSystem();
         examSystem(dt);
         yearSystem(dt);
         gameStateSystem();
+
+
+
+        
         eventCleanupSystem();
         deadCleanupSystem();
     } else if (gs.phase == Phase::GRADUATION) {
