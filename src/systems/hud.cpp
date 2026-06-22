@@ -199,6 +199,18 @@ void hudSystem(SDL_Renderer* r) {
         SDL_SetRenderScale(r, 1.0f, 1.0f);
     }
 
+    if (gs.slowBallCheat && (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM)) {
+        constexpr float scale = 1.35f;
+        const char* label = "SLOW BALL: ON";
+        const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
+            * static_cast<float>(std::strlen(label));
+        const float drawX = (static_cast<float>(Config::WINDOW_W) - textW - 12.0f) / scale;
+        SDL_SetRenderDrawColorFloat(r, 0.55f, 0.95f, 1.0f, 1.0f);
+        SDL_SetRenderScale(r, scale, scale);
+        SDL_RenderDebugText(r, drawX, 82.0f / scale, label);
+        SDL_SetRenderScale(r, 1.0f, 1.0f);
+    }
+
     // Exam phase indicator
     if (gs.phase == Phase::EXAM) {
         const float remaining = Config::EXAM_DURATION - gs.examTimer;

@@ -19,6 +19,7 @@ namespace Config {
     constexpr float WALL         = 0.35f;
     constexpr float BALL_RADIUS  = 0.24f;
     constexpr float BALL_SPEED   = 9.0f;
+    constexpr float SLOW_BALL_CHEAT_SPEED_FACTOR = 0.55f;
     constexpr float PADDLE_W     = 2.8f;              // MTA paddle art ~ 2.2:1
     constexpr float PADDLE_H     = 0.72f;
     constexpr float PADDLE_VISUAL_H = PADDLE_W * (351.0f / 563.0f); // full sprite height in world units

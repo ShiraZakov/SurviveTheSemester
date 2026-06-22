@@ -43,7 +43,7 @@ struct GameState {
     float yearAnnounceTimer; // >0: freeze gameplay and show year transition overlay
     float totalTime;        // total elapsed seconds (score: lower is better)
     bool  yearsExhausted;   // true when year 5 ended without clearing everything
-    bool  started;          // false until first Space launch; timers wait for this
+    bool  started;          // false until first click launch; timers wait for this
     // Exam phase state (valid only while phase == EXAM)
     float examTimer;        // elapsed seconds in the current exam
     float examSpawnTimer;   // seconds since the last projectile was spawned
@@ -52,6 +52,7 @@ struct GameState {
     // Input state
     float prevMouseWorldX;  // previous frame mouse X for paddle velocity calculation
     bool  hasPrevMouse;     // false until the first mouse sample is taken
+    bool  slowBallCheat;    // toggled by S; physics clamps balls to a slower speed band
     // Graduation stage (stage 2)
     bool  gradInitialized;
     int   gradNextChair;

@@ -20,6 +20,7 @@ struct ExamFinished  { int courseId; bool passed; float grade; };   // finishExa
 struct LifeLost      { int amount; };
 struct TaxMissed     { int courseIndex; };
 struct ProjectileHit { int courseId; };   // exam projectile reached the paddle
+struct ToggleSlowBallCheat {};
 
 struct EventTag {};   // marks every event entity for end-of-frame cleanup
 
@@ -56,5 +57,8 @@ namespace ev {
     }
     inline void projectileHit(int courseId) {
         bagel::Entity::create().addAll(ProjectileHit{courseId}, EventTag{});
+    }
+    inline void toggleSlowBallCheat() {
+        bagel::Entity::create().addAll(ToggleSlowBallCheat{}, EventTag{});
     }
 }

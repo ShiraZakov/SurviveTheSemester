@@ -156,7 +156,7 @@ Entity spawnGameState() {
     GameState gs{
         Config::START_LIVES, Config::START_AVERAGE, Phase::MENU, -1, 0, Config::COURSES,
         {}, 1, 0.0f, 0.0f, 0.0f, false, false,
-        0.0f, 0.0f, 0, 0, 0.0f, false,
+        0.0f, 0.0f, 0, 0, 0.0f, false, false,
         false, 0, 0, 0, 0.0f, Config::WORLD_W * 0.5f, Config::WORLD_W * 0.5f,
         Config::graduationStudentStartY(), -1,
         0, false, false};

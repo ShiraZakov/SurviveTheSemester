@@ -27,7 +27,7 @@ static GameState& bindFreshGameState() {
     GameState gs{
         Config::START_LIVES, Config::START_AVERAGE, Phase::GRADUATION, -1, 0, Config::COURSES,
         {}, 5, 0.0f, 0.0f, 0.0f, false, true,
-        0.0f, 0.0f, 0, 0, 0.0f, false, 0,
+        0.0f, 0.0f, 0, 0, 0.0f, false, false,
         true, 0, Config::graduationChairTotal(), 0, 0.0f,
         Config::WORLD_W * 0.5f, Config::WORLD_W * 0.5f,
         Config::graduationStudentStartY(), -1,

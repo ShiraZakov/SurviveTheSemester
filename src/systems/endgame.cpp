@@ -26,6 +26,15 @@ void gameStateSystem() {
     GameState& gs = gameState();
 
     {
+        static const Mask mask = MaskBuilder().set<ToggleSlowBallCheat>().build();
+        static int q = World::createQuery(mask);
+        for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+            (void)e;
+            gs.slowBallCheat = !gs.slowBallCheat;
+        }
+    }
+
+    {
         static const Mask mask = MaskBuilder().set<LifeLost>().build();
         static int q = World::createQuery(mask);
         for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {

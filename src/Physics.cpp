@@ -2,6 +2,7 @@
 #include "Components.h"
 #include "Events.h"
 #include "Config.h"
+#include "Game.h"
 #include "systems/systems.h"
 
 #include <box2d/box2d.h>
@@ -122,8 +123,11 @@ void physicsStepSystem(float dt) {
                 constexpr float MIN_SPEED_FACTOR = 0.90f;
                 constexpr float MAX_SPEED_FACTOR = 1.55f;
                 constexpr float MIN_VERTICAL_RATIO = 0.35f;
-                const float minSpeed = Config::BALL_SPEED * MIN_SPEED_FACTOR;
-                const float maxSpeed = Config::BALL_SPEED * MAX_SPEED_FACTOR;
+                const float cheatScale = gameState().slowBallCheat
+                    ? Config::SLOW_BALL_CHEAT_SPEED_FACTOR
+                    : 1.0f;
+                const float minSpeed = Config::BALL_SPEED * MIN_SPEED_FACTOR * cheatScale;
+                const float maxSpeed = Config::BALL_SPEED * MAX_SPEED_FACTOR * cheatScale;
                 float target = len;
                 if (len < minSpeed) target = minSpeed;
                 else if (len > maxSpeed) target = maxSpeed;

@@ -429,6 +429,10 @@ void SurviveGame::onKeyDown(int sc) {
         case SDL_SCANCODE_J: ev::dropCaught(0, 0, DropType::Assignment, {-1}); break;
         case SDL_SCANCODE_E: ev::examStarted(0);                     break;
         case SDL_SCANCODE_L: ev::lifeLost(1);                        break;
+        case SDL_SCANCODE_S:
+            if (gs.phase == Phase::PLAYING || gs.phase == Phase::EXAM)
+                ev::toggleSlowBallCheat();
+            break;
         default: break;
     }
 }
