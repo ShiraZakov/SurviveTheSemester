@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "Physics.h"
 #include "Game.h"
+#include "Input.h"
 #include <SDL3/SDL.h>
 
 using bagel::Entity;
@@ -17,14 +18,7 @@ using bagel::World;
 /// @param r    SDL renderer (used to resolve window position for mouse coords)
 /// @return void
 void inputSystem(float dt, SDL_Renderer* r) {
-    float globalMouseX = 0.0f, globalMouseY = 0.0f;
-    SDL_GetGlobalMouseState(&globalMouseX, &globalMouseY);
-    (void)globalMouseY;
-
-    int windowX = 0, windowY = 0;
-    SDL_Window* window = SDL_GetRenderWindow(r);
-    if (window) SDL_GetWindowPosition(window, &windowX, &windowY);
-    const float mouseWorldX = (globalMouseX - (float)windowX) / Config::PPM;
+    const float mouseWorldX = input::mouseWorldX(r);
     GameState& gs = gameState();
     float mouseVx = 0.0f;
     if (gs.hasPrevMouse && dt > 0.0f)

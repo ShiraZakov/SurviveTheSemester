@@ -7,6 +7,7 @@
 #include "Physics.h"
 #include "Sprites.h"
 #include "Events.h"
+#include "Input.h"
 
 #include <SDL3/SDL.h>
 
@@ -539,15 +540,7 @@ void graduationInputSystem(SDL_Renderer* r) {
     if (gs.phase != Phase::GRADUATION || !gs.gradInitialized) return;
     if (gs.gradAwaitingSpace || gs.gradAnimStep != 0 || gs.gradBeingDragged) return;
 
-    float globalMouseX = 0.0f, globalMouseY = 0.0f;
-    SDL_GetGlobalMouseState(&globalMouseX, &globalMouseY);
-    (void)globalMouseY;
-
-    int windowX = 0, windowY = 0;
-    SDL_Window* window = SDL_GetRenderWindow(r);
-    if (window) SDL_GetWindowPosition(window, &windowX, &windowY);
-
-    const float mouseWorldX = (globalMouseX - static_cast<float>(windowX)) / Config::PPM;
+    const float mouseWorldX = input::mouseWorldX(r);
     const float sy = idleStudentY(gs.gradNextChair, gs.gradStudentX);
     gs.gradStudentX = Config::clampGradStudentX(
         mouseWorldX, Config::GRAD_STUDENT_W * 0.5f);
@@ -561,15 +554,7 @@ void graduationOnMouseDown(SDL_Renderer* r) {
     if (gs.gradAwaitingSpace || gs.gradAnimStep != 0) return;
     if (gs.gradNextChair >= Config::graduationPathRows()) return;
 
-    float globalMouseX = 0.0f, globalMouseY = 0.0f;
-    SDL_GetGlobalMouseState(&globalMouseX, &globalMouseY);
-    (void)globalMouseY;
-
-    int windowX = 0, windowY = 0;
-    SDL_Window* window = SDL_GetRenderWindow(r);
-    if (window) SDL_GetWindowPosition(window, &windowX, &windowY);
-
-    const float mouseWorldX = (globalMouseX - static_cast<float>(windowX)) / Config::PPM;
+    const float mouseWorldX = input::mouseWorldX(r);
     const float halfW = Config::GRAD_STUDENT_W * 0.5f;
     const float sx = Config::clampGradStudentX(mouseWorldX, halfW);
 
