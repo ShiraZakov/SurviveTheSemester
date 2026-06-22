@@ -1,5 +1,4 @@
-// MAY - assignment drops. Removes drops that fell past the floor (uncaught).
-// Tax drops that miss the paddle emit TaxMissed.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"

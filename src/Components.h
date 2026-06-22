@@ -1,6 +1,4 @@
 #pragma once
-// Component & tag schemas
-
 #include "bagel.h"
 #include "Enums.h"
 #include <array>
@@ -11,19 +9,20 @@
 // Hot per-frame components (Position, PhysicsBody, Drawable, Course) get
 // PackedStorage at the bottom of this file; the rest use BAGEL's default
 // SparseStorage.
-struct Position   { float x, y; };                                 // center point in world meters
-struct Size       { float w, h; };                                 // full width & height, used for drawing and physics
-struct Drawable   { float r, g, b, a; Shape shape; };              // render color (0..1) + which shape to draw
-struct SpritePart { SDL_FRect part; int sheet; };                  // spritesheet crop + texture index (breakout style)
-struct PhysicsBody{ b2BodyId body; };                              // handle to this entity's Box2D body
+struct Position        { float x, y; };                                            // center point in world meters
+struct Size            { float w, h; };                                            // full width & height, used for drawing and physics
+struct Drawable        { float r, g, b, a; Shape shape; };                         // render color (0..1) + which shape to draw
+struct SpritePart      { SDL_FRect part; int sheet; };                             // spritesheet crop + texture index (breakout style)
+struct PhysicsBody     { b2BodyId body; };                                         // handle to this entity's Box2D body
 
-struct Course     { int id; CourseState state; float progress; };  // a course: its number, current state, progress 0..1
-struct BrickInfo    { int courseId; int courseIndex; };             // row track + catalog index (0..20)
-struct BrickProgress { int filled; int max; bool unlocked; float clearDelay; }; // meter + prereq; clearDelay > 0 = full meter pause before destroy
-struct BrickPrereqMask { uint32_t mustClear; };                      // bit i set => course index i must be cleared first
-struct DropInfo   { int courseId; int courseIndex; DropType type; bagel::ent_type sourceBrick; float gradeValue; };
-struct ProjInfo   { int courseId; };                               // exam projectile -> course that fired it
-struct PaddleImpact { float time; };                               // remaining visual bounce time after ball contact
+struct Course          { int id; CourseState state; float progress; };             // a course: its number, current state, progress 0..1
+struct BrickInfo       { int courseId; int courseIndex; };                         // row track + catalog index (0..20)
+struct BrickProgress   { int filled; int max; bool unlocked; float clearDelay; };  // meter + prereq; clearDelay > 0 = full meter pause before destroy
+struct BrickPrereqMask { uint32_t mustClear; };                                    // bit i set => course index i must be cleared first
+struct DropInfo        { int courseId; int courseIndex; DropType type;
+                        bagel::ent_type sourceBrick; float gradeValue; };
+struct ProjInfo        { int courseId; };                                          // exam projectile -> course that fired it
+struct PaddleImpact    { float time; };                                            // remaining visual bounce time after ball contact
 
 // on the singleton entity only
 struct GameState {

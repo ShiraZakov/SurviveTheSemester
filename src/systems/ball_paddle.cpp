@@ -1,5 +1,4 @@
-// AVIEL - ball/paddle behavior. Consumes CourseHit, removes hit bricks, and
-// handles ball loss without depending on another vertical being complete.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"

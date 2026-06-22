@@ -1,5 +1,4 @@
-// SHIRA - academic year progression. Years advance only by the per-year timer
-// (YEAR_SECONDS). Brick/course progress does not affect the year clock.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"

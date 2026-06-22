@@ -1,6 +1,4 @@
-// MAY - course progress. Advances a course from CourseHit / DropCaught events;
-// at 100% marks the course DONE and fires ExamStarted.
-// TODO (MAY): tune progress weights, drop spawning cadence, progress visuals.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Events.h"

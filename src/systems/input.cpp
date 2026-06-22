@@ -1,5 +1,4 @@
-// AVIEL - input. Moves the paddle (kinematic), clamps it to the play field,
-// and keeps stationary balls parked on it until launch.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"

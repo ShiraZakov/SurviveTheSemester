@@ -1,5 +1,4 @@
-// AVIEL - base renderer. Draws every Drawable from Position + Size (meters -> pixels).
-// TODO (AVIEL): sprites, polish, layering.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Game.h"

@@ -1,9 +1,7 @@
 #pragma once
-// Survive the Semester - game orchestration & shared accessors (CORE / SHIRA).
-
 #include "bagel.h"
 #include "Components.h"
-#include <algorithm>
+
 
 struct SDL_Renderer;
 
@@ -20,7 +18,7 @@ inline int countCaughtTax(const GameState& gs) {
     return caught;
 }
 
-// Core cleanup systems (owned by SHIRA, run at end of each frame).
+
 void eventCleanupSystem();   // deletes all event entities
 void deadCleanupSystem();    // destroys bodies + entities tagged DeadTag
 void destroyAllEntities();   // Play Again: wipe every live entity

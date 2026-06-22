@@ -16,24 +16,25 @@ SpritePart brickSpritePart(bagel::Entity brick);
 bool brickIsPlayable(bagel::Entity brick);
 bool isFinalProjectLocked();
 
-void inputSystem(float dt, SDL_Renderer* r);     // AVIEL
-void courseHitSystem();                        // AVIEL  (consumes CourseHit)
-void brickUnlockSystem();                      // AVIEL
-void brickMeterSystem();                       // MAY
-void brickClearDelaySystem(float dt);          // MAY
-void renderSystem(SDL_Renderer* r);            // AVIEL
+void inputSystem(float dt, SDL_Renderer* r);
+void courseHitSystem();
+void brickUnlockSystem();
+void brickMeterSystem();
+void brickClearDelaySystem(float dt);
+void renderSystem(SDL_Renderer* r);
 
-void dropSystem(float dt);                     // MAY
-void courseProgressSystem();                   // MAY    (consumes CourseHit/DropCaught)
-void hudSystem(SDL_Renderer* r);               // MAY
+void dropSystem(float dt);
+void courseProgressSystem();
+void hudSystem(SDL_Renderer* r);
 bool hudPauseButtonVisible(Phase phase);
 bool hudPauseButtonAvailable();
 bool hudPauseButtonHit(float px, float py);
 
-void examSystem(float dt);                     // YUVAL  (consumes ExamStarted -> ExamFinished)
+void examSystem(float dt);
 
-void yearSystem(float dt);                     // SHIRA  (year timer + row completion)
-void gameStateSystem();                        // SHIRA  (consumes LifeLost/ExamFinished)
+
+void yearSystem(float dt);
+void gameStateSystem();
 void deadCleanupSystem();
 void graduationOnLivesDepleted();
 void enterGraduationStage();

@@ -1,4 +1,4 @@
-// Exam phase: timer, projectiles, hit counting, grade resolution.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"

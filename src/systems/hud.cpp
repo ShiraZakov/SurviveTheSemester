@@ -1,4 +1,4 @@
-// MAY - HUD (graphical, no SDL_ttf). Lives, year display, status.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"

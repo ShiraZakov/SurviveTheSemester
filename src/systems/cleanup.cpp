@@ -1,4 +1,4 @@
-// Shared end-of-frame entity cleanup.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Physics.h"

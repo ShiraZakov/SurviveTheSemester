@@ -1,5 +1,4 @@
-// SHIRA - endgame integration. Folds LifeLost / tax / ExamFinished into GameState and
-// resolves win/lose. (Overlays are drawn by the HUD.)
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Events.h"

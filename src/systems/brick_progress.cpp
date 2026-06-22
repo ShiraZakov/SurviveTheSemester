@@ -1,4 +1,4 @@
-// Per-brick prerequisites, meters, and assignment drops.
+
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"

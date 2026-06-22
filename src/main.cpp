@@ -1,5 +1,3 @@
-// Survive the Semester - entry point (CORE / SHIRA).
-// Owns SDL setup and the fixed-timestep loop. Per-frame work lives in SurviveGame.
 #define SDL_MAIN_HANDLED
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
