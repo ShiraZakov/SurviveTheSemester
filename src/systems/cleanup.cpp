@@ -14,7 +14,9 @@ void deadCleanupSystem() {
     static int q = World::createQuery(mask);
     if (World::eof(q)) return;
 
-    bagel::Bag<ent_type, 128> dead;
+    // Stack buffer (no per-frame heap alloc): a query holds at most InitialEntities,
+    // so 128 can never overflow.
+    bagel::StaticBag<ent_type, 128> dead;
     for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
         dead.push(e.entity());
     for (int i = 0; i < dead.size(); ++i) {

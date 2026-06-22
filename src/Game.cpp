@@ -35,7 +35,10 @@ void eventCleanupSystem() {
     static const Mask mask = MaskBuilder().set<EventTag>().build();
     static int q = World::createQuery(mask);
 
-    bagel::Bag<ent_type, 64> dead;
+    // Stack buffer (no per-frame heap alloc): a query holds at most InitialEntities,
+    // so 128 can never overflow. Collect-then-delete because destroying mid-iteration
+    // mutates the query being walked.
+    bagel::StaticBag<ent_type, 128> dead;
     for (Entity e = World::first(q); !World::eof(q); e = World::next(q))
         dead.push(e.entity());
     for (int i = 0; i < dead.size(); ++i) Entity(dead[i]).destroy();
