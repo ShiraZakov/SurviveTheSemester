@@ -17,7 +17,7 @@ bool brickIsPlayable(bagel::Entity brick);
 bool isFinalProjectLocked();
 
 void inputSystem(float dt, SDL_Renderer* r);
-void courseHitSystem();
+void ballPaddleSystem();
 void brickUnlockSystem();
 void brickMeterSystem();
 void brickClearDelaySystem(float dt);

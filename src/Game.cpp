@@ -556,7 +556,7 @@ void SurviveGame::tick(float dt) {
         contactEventSystem();
         brickMeterSystem();
         brickClearDelaySystem(dt);
-        courseHitSystem();
+        ballPaddleSystem();
         dropSystem(dt);
         if (anyBrickClearedThisFrame())
             brickUnlockSystem();

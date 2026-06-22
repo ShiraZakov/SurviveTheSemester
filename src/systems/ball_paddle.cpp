@@ -112,7 +112,7 @@ static void paddleHitSystem() {
 ///        Dispatches to paddleHitSystem (consumes PaddleHit events) and
 ///        ballLossSystem (resets ball + emits LifeLost when ball falls below floor).
 /// @return void
-void courseHitSystem() {
+void ballPaddleSystem() {
     paddleHitSystem();
     ballLossSystem();
 }
