@@ -39,11 +39,14 @@ SurviveTheSemester/
 │
 ├── src/
 │   ├── main.cpp                  # SDL3 init, window/renderer, fixed-timestep loop
-│   ├── Game.h / Game.cpp         # System scheduler, scene setup, debug hotkeys
+│   ├── Game.h / Game.cpp         # System scheduler, input routing, menu/pause/end screens
+│   ├── GameStateAccess.cpp       # The GameState singleton accessor (gameState())
+│   ├── GameRestart.cpp           # destroyAllEntities + scene setup + "Play Again"
 │   ├── Config.h                  # All tunables: sizes, speeds, timers, thresholds
-│   ├── Enums.h                   # Phase, CourseState, DropType, HazardType, Shape
+│   ├── Enums.h                   # Phase, LoseReason, CourseState, DropType, Shape
 │   ├── Components.h              # All ECS component and tag structs (incl. GameState)
 │   ├── Events.h                  # Event component structs + producer helpers
+│   ├── Input.h                   # Shared mouse → world-meters helper
 │   ├── Physics.h / Physics.cpp   # Box2D wrapper, ball speed regulation, contact→events
 │   ├── EntityFactory.h / .cpp    # spawnX() functions — single source of truth for entities
 │   ├── Sprites.h / Sprites.cpp   # Spritesheet rects, prerequisite graph, draw helpers
@@ -54,20 +57,22 @@ SurviveTheSemester/
 │       ├── ball_paddle.cpp       # Bounce physics, spin, ball loss detection
 │       ├── brick_progress.cpp    # Brick meter, clear delay, prerequisite unlocking
 │       ├── drops.cpp             # Drop removal, TaxMissed penalty
-│       ├── progress.cpp          # Course progress → ExamStarted trigger
+│       ├── progress.cpp          # Course-track progress → ExamStarted trigger
 │       ├── exam.cpp              # Exam phase: timer, projectiles, ExamFinished
-│       ├── hazards.cpp           # Hazard spawning and effect application (Yuval — TODO)
 │       ├── hud.cpp               # Lives, year, elapsed timer, status line, pause overlay
 │       ├── endgame.cpp           # Average calculation, win/lose resolution
 │       ├── graduation.cpp        # Graduation stage: student navigation, chair vaulting
+│       ├── cleanup.cpp           # deadCleanupSystem — end-of-frame entity reaping
 │       └── year.cpp              # Academic year timer and advancement
 │
 ├── bagel.h                       # BAGEL ECS framework (do not edit)
 ├── lib/                          # SDL3, SDL3_image, Box2D libraries (do not edit)
-├── res/                          # Game assets (spritesheet, textures)
+├── res/                          # Game assets (spritesheets, textures)
 ├── tests/
-│   ├── test_brick_prereqs.cpp    # Unit tests for prerequisite resolution
-│   └── test_graduation_year.cpp  # Unit tests for graduation + year logic
+│   ├── test_brick_prereqs.cpp    # Prerequisite resolution
+│   ├── test_graduation_year.cpp  # Graduation + year logic
+│   ├── test_play_again_reset.cpp # "Play Again" full reset (no double-free)
+│   └── test_year_announce.cpp    # Year-transition announce timer
 │
 ├── CMakeLists.txt
 ├── GAME_RULES.md                 # Full game rules and mechanics
@@ -90,49 +95,68 @@ The project uses a **Data-Oriented Design (DOD)** approach via the BAGEL ECS:
 No virtual functions, no STL containers, no shared/unique pointers. All physics is encapsulated
 behind `Physics.h` — other systems never call Box2D directly.
 
+### Two meanings of "course" (read this before the code)
+
+The word "course" is used two ways, which trips up new readers:
+
+- **`courseId` (0–2)** — a colored **row/track** of bricks. There are only `Config::COURSES = 3`
+  of these. Each has one `Course` component whose progress drives **one exam**, so `coursesTotal`
+  is 3 (there are 3 exams, not 21).
+- **`courseIndex` (0–20)** — which of the **21 real catalog courses** a brick represents. It
+  selects the brick's sprite, prerequisites, meter size, and tax slot.
+
+The 7×3 brick grid is therefore **3 tracks × 7 catalog courses = 21 bricks**. A brick stores both
+values in `BrickInfo`. Keep this in mind: `progress.cpp` works on `courseId`, while prerequisites
+and sprites in `brick_progress.cpp` / `Sprites.cpp` work on `courseIndex`.
+
 ### System Execution Order (per frame)
 
+`SurviveGame::tick(dt)` runs the simulation. The Phase selects which systems run; the
+stage-1 play/exam order is below. Order is part of the contract: event **producers** run
+before **consumers**, and the two cleanup systems run last so events live exactly one frame.
+
 ```
-inputSystem
-physicsStepSystem(dt)       ← Box2D step + Position sync
-contactEventSystem          ← contacts → CourseHit / HazardTriggered / DropCaught events
-brickMeterSystem            ← hit responses, drop spawning
-brickClearDelaySystem       ← timed brick destruction
-courseHitSystem             ← paddle bounce, ball loss
-dropSystem(dt)              ← remove fallen drops
-brickUnlockSystem           ← prerequisite checking
-courseProgressSystem        ← course state, ExamStarted trigger
+inputSystem(dt)             ← paddle follows mouse; park ball before launch
+physicsStepSystem(dt)       ← Box2D step + Position sync + ball-speed regulation
+contactEventSystem          ← contacts/sensors → CourseHit / PaddleHit / DropCaught / ProjectileHit
+brickMeterSystem            ← consume CourseHit + DropCaught: advance meters, spawn drops
+brickClearDelaySystem(dt)   ← timed brick destruction → BrickCleared + Tax drop
+ballPaddleSystem            ← paddle bounce (PaddleHit) + ball-loss → LifeLost
+dropSystem(dt)              ← remove fallen drops; missed Tax → TaxMissed
+brickUnlockSystem           ← prerequisite recompute (only when a brick cleared this frame)
+courseProgressSystem        ← BrickCleared → track progress; 100% → ExamStarted
 examSystem(dt)              ← exam timer, projectiles, ExamFinished
-hazardSystem                ← spawn and apply hazard effects
-yearSystem                  ← year timer, totalTime accumulation, year advancement
-gameStateSystem             ← life/tax/exam → win/lose logic
+yearSystem(dt)              ← year timer, totalTime accumulation, year advancement
+gameStateSystem             ← fold life/tax/exam events into GameState → win/lose logic
 eventCleanupSystem          ← delete all event entities
 deadCleanupSystem           ← destroy physics bodies + delete Dead entities
-renderSystem                ← draw all Drawable entities
-hudSystem                   ← lives, year, elapsed timer, status line, pause overlay
 ```
 
-> **Note:** During pause (`gs.paused == true`) the main loop skips `tick()` entirely —
-> all simulation systems are frozen including timers.
+`renderSystem` and `hudSystem` run in `SurviveGame::draw()`, once per frame — **not** in
+`tick()`. Other Phases take different branches of `tick()`: a year-transition overlay
+freezes gameplay (only `yearSystem` runs); the **graduation** stage runs
+`graduationInputSystem` + `graduationSystem` instead of the stage-1 systems above.
+
+> **Note:** While paused (`gs.paused == true`) the main loop skips `tick()` entirely —
+> all simulation systems are frozen, including timers.
 
 ---
 
 ## Implemented Features
 
-| Feature | Status | Owner |
-|---------|--------|-------|
-| Paddle + ball physics | ✅ Done | Aviel |
-| 21-brick grid with prerequisites | ✅ Done | Aviel / May |
-| Assignment & Tax drops | ✅ Done | May |
-| Course progress → Exam trigger | ✅ Done | May |
-| Exam phase (timer + projectiles) | ✅ Done | Yuval |
-| Academic hazards | ⚠️ Partially done — spawn active, effects pending | Yuval |
-| 5 academic years + year timer | ✅ Done | Shira |
-| Win / Lose resolution | ✅ Done | Shira |
-| Graduation stage (chair vaulting) | ✅ Done | Shira |
-| HUD (lives, year, month) | ✅ Done | May |
-| Elapsed time display | ✅ Done | May |
-| ESC pause menu (Y/N quit) | ✅ Done | May |
+| Feature | Status |
+|---------|--------|
+| Paddle + ball physics | ✅ Done |
+| 21-brick grid with prerequisites | ✅ Done |
+| Assignment & Tax drops | ✅ Done |
+| Course progress → Exam trigger | ✅ Done |
+| Exam phase (timer + projectiles) | ✅ Done |
+| 5 academic years + year timer | ✅ Done |
+| Win / Lose resolution | ✅ Done |
+| Graduation stage (chair vaulting) | ✅ Done |
+| HUD (lives, year, month) | ✅ Done |
+| Elapsed time display | ✅ Done |
+| ESC / P pause toggle | ✅ Done |
 
 ---
 
@@ -151,28 +175,27 @@ The binary and `res/` are placed together automatically by the post-build step i
 
 ## Controls
 
+The paddle (and the graduation student) is **mouse-only** — there is no keyboard movement.
+
 | Input | Action |
 |-------|--------|
-| Mouse move | Move paddle |
-| A / ← | Move paddle left |
-| D / → | Move paddle right |
-| Space | Launch ball / confirm action |
-| ESC | Pause game (shows quit menu) |
-| Y | Confirm quit (while paused) |
-| N | Resume game (while paused) |
-| R | Reset scene |
+| Mouse move | Move the paddle / graduation student |
+| Left click | Launch the ball (stage 1) · jump or retry-after-foul (graduation) · menu/end-screen buttons |
+| ESC / P | Toggle pause (during play, exam, or graduation) |
+
+Quitting is done from the on-screen **Exit** button on the win/lose screen.
 
 ---
 
 ## Debug Hotkeys
 
-Available during gameplay (useful for testing individual systems in isolation):
+Available during gameplay to exercise individual systems in isolation (each synthesizes an
+event entity, as if its real producer had fired):
 
 | Key | Action |
 |-----|--------|
-| H | Synthesize CourseHit event |
-| J | Synthesize DropCaught event |
-| E | Synthesize ExamStarted{course 0} |
-| L | Synthesize LifeLost event |
-| Space | Launch ball |
-| R | Reset scene |
+| H | Synthesize `CourseHit` event |
+| J | Synthesize `DropCaught` (Assignment) event |
+| E | Synthesize `ExamStarted{course 0}` |
+| L | Synthesize `LifeLost` event |
+| S | Toggle the slow-ball cheat (play/exam only) |

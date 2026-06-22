@@ -1,4 +1,18 @@
-// Graduation stage (stage 2): same ECS/render pattern as stage 1.
+// graduation.cpp — Stage 2 "graduation ceremony".
+//
+// The stage-1 paddle entity is repurposed as the student (GradStudentTag). The player
+// slides left/right with the mouse and left-clicks to vault forward one chair row;
+// touching the stage at the top wins. Red obstacles slide along the gap between each
+// pair of rows: an obstacle can push the student, and if it shoves them off the row edge
+// that costs a life (a "foul").
+//
+// Student motion is a tiny state machine in GameState.gradAnimStep:
+//   0 = idle/standing  (player can aim and jump)
+//   1 = vaulting toward the chosen chair (arc)
+//   2 = landing on the chair; then gradNextChair advances and we return to 0.
+// gradAwaitingSpace = a foul happened; we pause and wait for the player to retry (if any
+// lives remain). Most helpers below scan the whole world for the single student or the
+// few obstacles — there are only a handful of these entities, so clarity wins over speed.
 #include "systems/systems.h"
 #include "Components.h"
 #include "Config.h"
@@ -582,6 +596,9 @@ void graduationOnSpace() {
     commitGraduationFrame();
 }
 
+// Per-frame driver: moves obstacles, applies any push/drag to the student, redraws the
+// student, and advances the vault->land animation, bumping gradNextChair when a landing
+// completes. Reaching the stage (inside commitGraduationFrame) flips the phase to WON.
 void graduationSystem(float dt) {
     GameState& gs = gameState();
     if (gs.phase != Phase::GRADUATION) return;

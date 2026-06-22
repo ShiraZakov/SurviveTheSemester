@@ -1,3 +1,8 @@
+// render.cpp — draws the scene.
+// Walks every entity with Position+Size+Drawable and draws it: prefers the spritesheet
+// crop (SpritePart), falling back to a colored rect/circle when textures aren't loaded.
+// Bricks also get their progress meter; the Tax drop and graduation backdrop are special-
+// cased. World meters are converted to pixels via Config::PPM at this boundary.
 
 #include "systems/systems.h"
 #include "Components.h"
@@ -118,6 +123,10 @@ static void drawEntity(SDL_Renderer* r, Entity e) {
     }
 }
 
+/// @brief Draws the graduation backdrop (when active) then every visible entity. Grad
+///        students are collected and drawn last so they layer on top of the chairs.
+/// @param r SDL renderer
+/// @return void
 void renderSystem(SDL_Renderer* r) {
     GameState& gs = gameState();
     if (sprites::ready()

@@ -1,3 +1,9 @@
+// year.cpp — the academic-year clock.
+// Accumulates play time (totalTime, the score) and per-year time. When a year's timer
+// fills it advances to the next year and shows the year-transition overlay. Running out
+// of years in stage 1 sets yearsExhausted (a lose condition checked by gameStateSystem);
+// in graduation, year-5 expiry ends the game directly. Only ticks once the ball is in
+// play (gs.started) so the clock pauses between serves.
 
 #include "systems/systems.h"
 #include "Components.h"

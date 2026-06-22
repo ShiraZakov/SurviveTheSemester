@@ -1,3 +1,15 @@
+// Game.cpp — application shell and system scheduler.
+//
+// SurviveGame owns three things: the per-frame system call order (tick), all the
+// full-screen UI (menu / level-select / how-to-play guide / pause banner / win-lose
+// screens, drawn immediate-mode with SDL), and the routing of raw SDL input events to
+// the right handler for the current Phase. The actual gameplay lives in systems/*;
+// this file only decides what runs and in what order.
+//
+// Frame split (driven by main.cpp's fixed-timestep loop):
+//   tick(dt) — simulation: runs the gameplay systems. Skipped entirely while paused.
+//   draw()   — render once per frame: renderSystem + hudSystem + any overlay screen.
+
 #include "Game.h"
 #include "Components.h"
 #include "Events.h"
@@ -538,11 +550,17 @@ void SurviveGame::onMouseDown(int button, float px, float py) {
         graduationOnMouseDown(_renderer);
 }
 
+// One fixed simulation step. Order is part of the contract: each system that emits
+// events runs before the systems that consume them, and the two cleanup systems run
+// last so events live exactly one frame and Dead entities are reaped only after every
+// system has had a chance to see them. The current Phase selects which subset runs:
+// the year-transition freeze, stage-1 play/exam, or the graduation stage.
 void SurviveGame::tick(float dt) {
     GameState& gs = gameState();
     if (gs.paused && !hudPauseButtonAvailable())
         gs.paused = false;
 
+    // Year-transition overlay is showing: freeze gameplay, only advance the announce timer.
     if (gs.yearAnnounceTimer > 0.0f) {
         yearSystem(dt);
         eventCleanupSystem();

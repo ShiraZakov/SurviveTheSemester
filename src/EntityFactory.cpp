@@ -1,3 +1,14 @@
+// EntityFactory.cpp — builds every entity together with its Box2D body and components.
+//
+// Body conventions (set by the b2BodyType passed to makeBody):
+//   paddle      = kinematic (moved by input, not by forces)
+//   ball        = dynamic   (bounces: restitution 1, no friction)
+//   walls/bricks= static
+//   drops/proj. = kinematic sensors (report overlap without a solid collision)
+// Graduation chairs/obstacles and the Course / GameState aggregates have no body —
+// they are pure data entities. addBox/addCircle pick which Box2D events a shape emits
+// (contactEv for ball<->brick, sensorEv for paddle catching drops/projectiles).
+
 #include "EntityFactory.h"
 #include "Components.h"
 #include "Config.h"

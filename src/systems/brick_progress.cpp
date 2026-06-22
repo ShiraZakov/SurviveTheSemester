@@ -1,3 +1,11 @@
+// brick_progress.cpp — per-brick meter, unlocking, and clearing.
+//
+// Each brick has a small segment meter (BrickProgress). Ball hits and caught Assignment
+// drops advance it; when full, the brick waits a brief clearDelay then is destroyed,
+// which emits BrickCleared and spawns a Tax drop. Bricks can be locked behind
+// prerequisite courses (BrickPrereqMask) — brickUnlockSystem unlocks them once the
+// required catalog courses are gone, and also swaps to the locked/unlocked sprite.
+// "Playable" (brickIsPlayable) = unlocked, not mid-clear, and prerequisites met.
 
 #include "systems/systems.h"
 #include "Components.h"

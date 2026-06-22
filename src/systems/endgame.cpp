@@ -1,3 +1,8 @@
+// endgame.cpp — folds gameplay events into GameState and resolves win/lose.
+// Reads LifeLost / DropCaught(Tax) / TaxMissed / ExamFinished events into lives, average,
+// and coursesDone, then checks end conditions in priority order: out of lives > all bricks
+// cleared (win, or stage-1 avg-too-low) > years exhausted > all exams done but avg < pass.
+// During graduation only the out-of-lives check applies (delegated to graduationOnLivesDepleted).
 
 #include "systems/systems.h"
 #include "Components.h"

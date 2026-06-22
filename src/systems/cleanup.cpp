@@ -1,3 +1,7 @@
+// cleanup.cpp — end-of-frame entity reaping.
+// Systems never delete entities mid-frame (that would mutate queries other systems are
+// still walking); they tag them DeadTag instead. This runs last each frame to destroy
+// those bodies and entities once, after every system has seen them.
 
 #include "systems/systems.h"
 #include "Components.h"
@@ -9,6 +13,8 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Destroys the Box2D body and deletes every entity tagged DeadTag this frame.
+/// @return void
 void deadCleanupSystem() {
     static const Mask mask = MaskBuilder().set<DeadTag>().build();
     static int q = World::createQuery(mask);

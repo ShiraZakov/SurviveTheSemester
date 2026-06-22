@@ -1,7 +1,7 @@
 # Survive the Semester — Game Rules
 
 > **Note:** This document describes the current implemented mechanics.
-> A full detailed rules document will be written by Shira.
+> A full detailed rules document is still to be written.
 
 ---
 
@@ -64,8 +64,9 @@ Three types of drops fall from bricks and must be caught with the paddle.
 | Drop | Color | Effect |
 |------|-------|--------|
 | **Assignment** | Course color | Increments the brick's progress meter |
-| **Bonus** | Gold/glowing | Bonus points toward course progress |
 | **Tax** | Gold with bar detail | Must be caught; missing it reduces your average by **−5 points** |
+
+*(A `Bonus` drop type exists in the `DropType` enum but is not spawned by the current build.)*
 
 - Drops that fall below the screen without being caught are lost.
 - Tax drops that are missed emit a `TaxMissed` penalty.
@@ -110,15 +111,9 @@ Three types of drops fall from bricks and must be caught with the paddle.
 
 ## Academic Hazards
 
-*(Partially implemented — spawn logic active, full effects pending — Yuval)*
-
-Starting from **Year 2**, one hazard entity spawns per year in the middle third of the field.
-Triggered when the ball passes through it.
-
-| Hazard Type | Effect |
-|-------------|--------|
-| `LoseLife` | Lose 1 life immediately |
-| `ReduceProgress` | Target course loses 25% of its progress *(not yet active)* |
+*(Not implemented.)* Academic hazards were planned early on but were cut from the current
+build — there is no hazard entity, system, or `HazardType` enum in the code. The exam phase
+is the main in-course challenge instead.
 
 ---
 
@@ -146,29 +141,25 @@ After all 21 courses are cleared, the game transitions to `Phase::GRADUATION`.
 
 ---
 
-## Pause Menu
+## Pause
 
-- Press **ESC** at any time during PLAYING, EXAM, or GRADUATION to pause.
-- A pause overlay appears asking: *"Do you want to quit?"*
-- Press **Y** or click **[Y] Yes** to exit the game.
-- Press **N** or click **[N] No** to resume.
-- The elapsed timer is **frozen** while paused.
+- Press **ESC** or **P** (or click the on-screen **Pause** button) during PLAYING, EXAM, or
+  GRADUATION to pause; press it again (or click **Resume**) to continue.
+- A "PAUSED" banner shows over the frozen game; the elapsed timer is **frozen** while paused.
+- Quitting is done from the **Exit** button on the win/lose screen, not from the pause state.
 
 ---
 
 ## Controls
 
+The paddle (and graduation student) is **mouse-only** — there is no keyboard movement, and
+the ball is launched with a click, not the Space bar.
+
 | Input | Action |
 |-------|--------|
-| Mouse move | Move paddle / control student |
-| A / ← | Move paddle left |
-| D / → | Move paddle right |
-| Space | Launch ball / confirm action |
-| Left click | Jump (Graduation stage) |
-| ESC | Pause game |
-| Y | Quit (while paused) |
-| N | Resume (while paused) |
-| R | Reset scene |
+| Mouse move | Move the paddle / graduation student |
+| Left click | Launch the ball (stage 1) · jump / retry-after-foul (graduation) · UI buttons |
+| ESC / P | Toggle pause |
 
 ---
 

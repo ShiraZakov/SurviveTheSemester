@@ -1,3 +1,8 @@
+// exam.cpp — the exam phase.
+// An ExamStarted event puts the game into Phase::EXAM: a timer runs while projectiles
+// are fired at the paddle from three columns; the player dodges. When the timer ends the
+// grade is computed from how many hits were taken (100 - 12*hits, floored at 55) and an
+// ExamFinished event is emitted, returning play to Phase::PLAYING.
 
 #include "systems/systems.h"
 #include "Components.h"

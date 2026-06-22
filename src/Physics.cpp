@@ -1,3 +1,15 @@
+// Physics.cpp — the only file that touches Box2D directly.
+//
+// Two jobs:
+//   1. A thin phys:: API (init/shutdown, get/set velocity, set position, destroy body)
+//      so gameplay systems never call Box2D — they read Position and go through these.
+//   2. Turning Box2D's per-step contact/sensor results into ECS event entities
+//      (CourseHit, PaddleHit, DropCaught, ProjectileHit) — see contactEventSystem.
+//
+// Box2D owns motion: physicsStepSystem steps the world, then copies body transforms
+// back into Position. The entity<->body link is the body's userData, which stores
+// (entity id + 1) so that a userData of 0 means "no entity".
+
 #include "Physics.h"
 #include "Components.h"
 #include "Events.h"

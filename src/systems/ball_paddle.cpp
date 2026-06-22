@@ -1,3 +1,7 @@
+// ball_paddle.cpp — ball/paddle interaction.
+// On a PaddleHit event, computes the bounce angle from where the ball struck the paddle
+// (plus a little spin from paddle motion) so the player can aim. Separately detects when
+// the ball falls past the floor: emits LifeLost and re-parks the ball for the next serve.
 
 #include "systems/systems.h"
 #include "Components.h"

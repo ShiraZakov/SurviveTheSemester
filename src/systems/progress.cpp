@@ -1,3 +1,7 @@
+// progress.cpp — course-track progress and exam triggering.
+// Each cleared brick (BrickCleared) bumps its colored track's Course.progress; when a
+// track reaches 100% it flips ACTIVE -> DONE and emits ExamStarted. Note this works on
+// courseId (the 0..2 track), not the 0..20 catalog index — see Components.h.
 
 #include "systems/systems.h"
 #include "Components.h"
@@ -30,7 +34,7 @@ static void bump(int courseId, float amount) {
 /// @return void
 void courseProgressSystem() {
     // 0.14 * 8 bricks per row > 1.0, so clearing a course's bricks completes it
-    // (drives the end-to-end demo). MAY: retune once real drops/weights exist.
+    // (drives the end-to-end demo). TODO: retune once real drops/weights exist.
     {
         static const Mask mask = MaskBuilder().set<BrickCleared>().build();
         static int q = World::createQuery(mask);

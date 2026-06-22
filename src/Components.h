@@ -1,4 +1,21 @@
 #pragma once
+// All ECS component + tag structs, plus the GameState singleton.
+//
+// Three kinds of thing live here:
+//   - Data components : POD structs attached to entities (Position, Course, ...).
+//   - GameState       : one large struct on a single "singleton" entity holding all
+//                       cross-system status (lives, phase, timers, stage-2 state).
+//   - Tags            : empty structs used only for has<>() filtering (BallTag, ...).
+//
+// Two meanings of "course" — easy to confuse, so worth stating up front:
+//   - courseId    (0..COURSES-1, i.e. 0..2): a colored row/track of bricks. Each track
+//                 has one Course component whose progress drives ONE exam (coursesTotal == 3).
+//   - courseIndex (0..20): which of the 21 real catalog courses a brick represents —
+//                 selects its sprite, prerequisites, meter size, and tax slot.
+// A brick carries both (see BrickInfo). The 7x3 grid = 3 tracks x 7 catalog courses.
+//
+// Storage tiers (Tagged / Packed / Sparse) are customized at the bottom of this file.
+
 #include "bagel.h"
 #include "Enums.h"
 #include <array>
@@ -16,7 +33,7 @@ struct SpritePart      { SDL_FRect part; int sheet; };                          
 struct PhysicsBody     { b2BodyId body; };                                         // handle to this entity's Box2D body
 
 struct Course          { int id; CourseState state; float progress; };             // a course: its number, current state, progress 0..1
-struct BrickInfo       { int courseId; int courseIndex; };                         // row track + catalog index (0..20)
+struct BrickInfo       { int courseId; int courseIndex; };                         // courseId = colored track 0..2; courseIndex = catalog course 0..20
 struct BrickProgress   { int filled; int max; bool unlocked; float clearDelay; };  // meter + prereq; clearDelay > 0 = full meter pause before destroy
 struct BrickPrereqMask { uint32_t mustClear; };                                    // bit i set => course index i must be cleared first
 struct DropInfo        { int courseId; int courseIndex; DropType type;

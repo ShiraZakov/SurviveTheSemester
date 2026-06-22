@@ -1,3 +1,6 @@
+// input.cpp — stage-1 paddle control.
+// Moves the kinematic paddle to follow the mouse (clamped to the field) and, before
+// launch, parks a stationary ball on top of the paddle so it rides along until served.
 
 #include "systems/systems.h"
 #include "Components.h"

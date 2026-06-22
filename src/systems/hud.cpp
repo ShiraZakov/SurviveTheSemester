@@ -1,3 +1,8 @@
+// hud.cpp — heads-up display and on-field prompts.
+// Graphical only (sprites + SDL_RenderDebugText, no SDL_ttf): lives pips, the year badge
+// and timer bar, academic month, average, exam status, the pause button/banner, and the
+// year-transition overlay. Also owns the pause-button hit-test helpers used by Game.cpp.
+// The WON/LOST result screen itself is drawn separately in Game.cpp (drawEndScreen).
 
 #include "systems/systems.h"
 #include "Components.h"
