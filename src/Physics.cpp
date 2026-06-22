@@ -79,71 +79,77 @@ void phys::destroyBody(ent_type e) {
     en.del<PhysicsBody>();
 }
 
-/// @brief Steps the Box2D world and syncs Position components from body transforms.
-///        Also regulates ball speed to stay within a playable band.
+/// @brief Copies Box2D body transforms into Position components (Box2D is the
+///        source of truth). Skips dead entities still lingering in the query.
+/// @return void
+static void syncPositionsFromBodies() {
+    static const Mask mask = MaskBuilder()
+        .set<PhysicsBody>()
+        .set<Position>()
+        .build();
+    static int q = World::createQuery(mask);
+    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+        if (e.has<DeadTag>()) continue;   // dead entities linger in the query until cleanup
+        b2BodyId body = e.get<PhysicsBody>().body;
+        if (!b2Body_IsValid(body)) continue;
+        b2Vec2 p = b2Body_GetPosition(body);
+        e.get<Position>() = {p.x, p.y};
+    }
+}
+
+/// @brief Keeps each ball's speed within a playable band (and a minimum vertical
+///        component) so paddle hits add feel without the ball stalling or running
+///        away. Honors the slow-ball cheat.
+/// @return void
+static void regulateBallSpeed() {
+    static const Mask mask = MaskBuilder()
+        .set<BallTag>()
+        .set<PhysicsBody>()
+        .build();
+    static int q = World::createQuery(mask);
+    for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
+        if (e.has<DeadTag>()) continue;   // dead entities linger in the query until cleanup
+        b2BodyId b = e.get<PhysicsBody>().body;
+        if (!b2Body_IsValid(b)) continue;
+        b2Vec2 v = b2Body_GetLinearVelocity(b);
+        float len = b2Length(v);
+        if (len > 0.01f) {
+            constexpr float MIN_SPEED_FACTOR = 0.90f;
+            constexpr float MAX_SPEED_FACTOR = 1.55f;
+            constexpr float MIN_VERTICAL_RATIO = 0.35f;
+            const float cheatScale = gameState().slowBallCheat
+                ? Config::SLOW_BALL_CHEAT_SPEED_FACTOR
+                : 1.0f;
+            const float minSpeed = Config::BALL_SPEED * MIN_SPEED_FACTOR * cheatScale;
+            const float maxSpeed = Config::BALL_SPEED * MAX_SPEED_FACTOR * cheatScale;
+            float target = len;
+            if (len < minSpeed) target = minSpeed;
+            else if (len > maxSpeed) target = maxSpeed;
+
+            float nx = v.x / len;
+            float ny = v.y / len;
+            float absNy = ny < 0.0f ? -ny : ny;
+            if (absNy < MIN_VERTICAL_RATIO) {
+                float signY = ny < 0.0f ? -1.0f : 1.0f;
+                float signX = nx < 0.0f ? -1.0f : 1.0f;
+                ny = signY * MIN_VERTICAL_RATIO;
+                nx = signX * std::sqrt(1.0f - MIN_VERTICAL_RATIO * MIN_VERTICAL_RATIO);
+            }
+
+            b2Body_SetLinearVelocity(b, {nx * target, ny * target});
+        }
+    }
+}
+
+/// @brief Steps the Box2D world, then reconciles the ECS with it: syncs Position
+///        from body transforms and regulates ball speed.
 /// @param dt Fixed timestep in seconds
 /// @return void
 void physicsStepSystem(float dt) {
     if (!b2World_IsValid(g_world)) return;
     b2World_Step(g_world, dt, Config::SUBSTEPS);
-
-    // Box2D is the source of truth: copy body transforms into Position.
-    {
-        static const Mask mask = MaskBuilder()
-            .set<PhysicsBody>()
-            .set<Position>()
-            .build();
-        static int q = World::createQuery(mask);
-        for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-            if (e.has<DeadTag>()) continue;   // dead entities linger in the query until cleanup
-            b2BodyId body = e.get<PhysicsBody>().body;
-            if (!b2Body_IsValid(body)) continue;
-            b2Vec2 p = b2Body_GetPosition(body);
-            e.get<Position>() = {p.x, p.y};
-        }
-    }
-
-    // Keep the ball in a playable speed band so paddle hits can add feel
-    // without letting the ball stall or run away.
-    {
-        static const Mask mask = MaskBuilder()
-            .set<BallTag>()
-            .set<PhysicsBody>()
-            .build();
-        static int q = World::createQuery(mask);
-        for (Entity e = World::first(q); !World::eof(q); e = World::next(q)) {
-            if (e.has<DeadTag>()) continue;   // dead entities linger in the query until cleanup
-            b2BodyId b = e.get<PhysicsBody>().body;
-            if (!b2Body_IsValid(b)) continue;
-            b2Vec2 v = b2Body_GetLinearVelocity(b);
-            float len = b2Length(v);
-            if (len > 0.01f) {
-                constexpr float MIN_SPEED_FACTOR = 0.90f;
-                constexpr float MAX_SPEED_FACTOR = 1.55f;
-                constexpr float MIN_VERTICAL_RATIO = 0.35f;
-                const float cheatScale = gameState().slowBallCheat
-                    ? Config::SLOW_BALL_CHEAT_SPEED_FACTOR
-                    : 1.0f;
-                const float minSpeed = Config::BALL_SPEED * MIN_SPEED_FACTOR * cheatScale;
-                const float maxSpeed = Config::BALL_SPEED * MAX_SPEED_FACTOR * cheatScale;
-                float target = len;
-                if (len < minSpeed) target = minSpeed;
-                else if (len > maxSpeed) target = maxSpeed;
-
-                float nx = v.x / len;
-                float ny = v.y / len;
-                float absNy = ny < 0.0f ? -ny : ny;
-                if (absNy < MIN_VERTICAL_RATIO) {
-                    float signY = ny < 0.0f ? -1.0f : 1.0f;
-                    float signX = nx < 0.0f ? -1.0f : 1.0f;
-                    ny = signY * MIN_VERTICAL_RATIO;
-                    nx = signX * std::sqrt(1.0f - MIN_VERTICAL_RATIO * MIN_VERTICAL_RATIO);
-                }
-
-                b2Body_SetLinearVelocity(b, {nx * target, ny * target});
-            }
-        }
-    }
+    syncPositionsFromBodies();
+    regulateBallSpeed();
 }
 
 static void onContactPair(ent_type a, ent_type b) {
