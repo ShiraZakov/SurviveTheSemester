@@ -28,15 +28,24 @@ bool brickPrereqsMet(Entity brick) {
     return true;
 }
 
+// Decide whether a brick draws its locked sprite, given an already-computed
+// prereq result. Only the final-project brick depends on prereqsMet; every other
+// course keys off its own unlock flag. Callers that already know prereqsMet
+// (brickUnlockSystem) reuse it here instead of re-running the full prereq scan.
+static bool brickLockedForSprite(int ci, const BrickProgress& prog, bool prereqsMet) {
+    if (ci == sprites::FINAL_COURSE_INDEX)
+        return !prereqsMet;
+    return sprites::courseShowsLockedSprite(ci, prog.unlocked);
+}
+
 bool brickDrawLocked(Entity brick) {
     if (!brick.has<BrickInfo>() || !brick.has<BrickProgress>()) return false;
     const int ci = brick.get<BrickInfo>().courseIndex;
     const auto& prog = brick.get<BrickProgress>();
 
-    if (ci == sprites::FINAL_COURSE_INDEX)
-        return !brickPrereqsMet(brick);
-
-    return sprites::courseShowsLockedSprite(ci, prog.unlocked);
+    // Only the final-project brick needs the (expensive) prereq scan; skip it otherwise.
+    const bool prereqsMet = (ci == sprites::FINAL_COURSE_INDEX) ? brickPrereqsMet(brick) : true;
+    return brickLockedForSprite(ci, prog, prereqsMet);
 }
 
 bool brickShowsLocked(Entity brick) {
@@ -142,7 +151,8 @@ void brickUnlockSystem() {
         else if (!prog.unlocked)
             prog.unlocked = true;
 
-        applyBrickSprite(e, ci, brickDrawLocked(e));
+        // Reuse prereqsMet (already computed above) instead of re-scanning via brickDrawLocked.
+        applyBrickSprite(e, ci, brickLockedForSprite(ci, prog, prereqsMet));
     }
 }
 
