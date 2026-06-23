@@ -1,0 +1,25 @@
+var _events_8h =
+[
+    [ "CourseHit", "struct_course_hit.html", "struct_course_hit" ],
+    [ "PaddleHit", "struct_paddle_hit.html", "struct_paddle_hit" ],
+    [ "DropCaught", "struct_drop_caught.html", "struct_drop_caught" ],
+    [ "BrickCleared", "struct_brick_cleared.html", "struct_brick_cleared" ],
+    [ "ExamStarted", "struct_exam_started.html", "struct_exam_started" ],
+    [ "ExamFinished", "struct_exam_finished.html", "struct_exam_finished" ],
+    [ "LifeLost", "struct_life_lost.html", "struct_life_lost" ],
+    [ "TaxMissed", "struct_tax_missed.html", "struct_tax_missed" ],
+    [ "ProjectileHit", "struct_projectile_hit.html", "struct_projectile_hit" ],
+    [ "ToggleSlowBallCheat", "struct_toggle_slow_ball_cheat.html", null ],
+    [ "EventTag", "struct_event_tag.html", null ],
+    [ "bagel::Storage&lt; EventTag &gt;", "structbagel_1_1_storage_3_01_event_tag_01_4.html", "structbagel_1_1_storage_3_01_event_tag_01_4" ],
+    [ "ev::brickCleared", "namespaceev.html#a666ed3c9a077d4947345670b736d2cd3", null ],
+    [ "ev::courseHit", "namespaceev.html#aace579ef96403e5bf0a45d886b9d4499", null ],
+    [ "ev::dropCaught", "namespaceev.html#a3b73c284b7deccc8284f3ec5883fbaf5", null ],
+    [ "ev::examFinished", "namespaceev.html#aa314f98a17fa5ea203f9a401428d8933", null ],
+    [ "ev::examStarted", "namespaceev.html#ae93b1ee3229a5e307c19b6fa33e8cdb2", null ],
+    [ "ev::lifeLost", "namespaceev.html#a8c30efc1370025f3e67a57fe411cec14", null ],
+    [ "ev::paddleHit", "namespaceev.html#ac5e07abd1128de5bdf6be5d94df0fd11", null ],
+    [ "ev::projectileHit", "namespaceev.html#afdc7059aff9b1cb6ffb21f90d88c52fb", null ],
+    [ "ev::taxMissed", "namespaceev.html#a311e34bb40c3ae6453b2f7e8ac7bb223", null ],
+    [ "ev::toggleSlowBallCheat", "namespaceev.html#a08f178a98fed459ceaa9c2f4c865ee98", null ]
+];

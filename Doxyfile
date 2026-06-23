@@ -1,0 +1,21 @@
+# Doxyfile — Survive the Semester
+
+PROJECT_NAME        = "Survive the Semester"
+PROJECT_NUMBER      = 1.0
+OUTPUT_DIRECTORY    = docs
+
+INPUT               = README.md src
+RECURSIVE           = YES
+EXCLUDE             = src/bagel.h
+USE_MDFILE_AS_MAINPAGE = README.md
+
+EXTRACT_ALL         = YES
+EXTRACT_STATIC      = YES
+
+GENERATE_HTML       = YES
+HTML_OUTPUT         = html
+HTML_TIMESTAMP      = YES
+
+GENERATE_LATEX      = NO
+
+HAVE_DOT            = NO

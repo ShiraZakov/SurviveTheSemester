@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['setposition_0',['setPosition',['../namespacephys.html#a96c603f2c822364cd99274c4fb0cb320',1,'phys']]],
+  ['setupfreshplayscene_1',['setupFreshPlayScene',['../_game_8h.html#ab9fef33366e91a9ac18b6f6ba3a66e79',1,'setupFreshPlayScene():&#160;GameRestart.cpp'],['../_game_restart_8cpp.html#ab9fef33366e91a9ac18b6f6ba3a66e79',1,'setupFreshPlayScene():&#160;GameRestart.cpp']]],
+  ['setvelocity_2',['setVelocity',['../namespacephys.html#a8e654ad6bafa2afaca6b7d710370d928',1,'phys']]],
+  ['shutdown_3',['shutdown',['../class_survive_game.html#aaab92907a608fcf12ccde33f3b4aab3f',1,'SurviveGame::shutdown()'],['../namespacephys.html#acb2f9e18ae9754e4fd5629019f1fb501',1,'phys::shutdown()'],['../namespacesprites.html#a401929224eba44171b446d4df5b42a0f',1,'sprites::shutdown()']]],
+  ['spawnball_4',['spawnBall',['../_entity_factory_8cpp.html#a97ec7a75999b611f93bb48ad7d059c8c',1,'spawnBall(float x, float y):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#ab562992bfd39557e80cede24eea57c2c',1,'spawnBall(float x, float y):&#160;EntityFactory.cpp']]],
+  ['spawnbrick_5',['spawnBrick',['../_entity_factory_8cpp.html#acff4970a67579f53c48ecc37e0725812',1,'spawnBrick(int courseId, int spriteIndex, float x, float y):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#a170bd9b0d666dc4e4f4e03d9852a4556',1,'spawnBrick(int courseId, int spriteIndex, float x, float y):&#160;EntityFactory.cpp']]],
+  ['spawncourse_6',['spawnCourse',['../_entity_factory_8cpp.html#ae61309d28f4944973a7b3be2bc55e751',1,'spawnCourse(int id):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#aa342f9b5ae7e998a525ee560f1590ba0',1,'spawnCourse(int id):&#160;EntityFactory.cpp']]],
+  ['spawndrop_7',['spawnDrop',['../_entity_factory_8cpp.html#abaf833257ac1db3e592890ba21eb45c3',1,'spawnDrop(int courseId, int courseIndex, float x, float y, DropType type, ent_type sourceBrick, float gradeValue):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#a2010c32fedabe736224748a392de235c',1,'spawnDrop(int courseId, int courseIndex, float x, float y, DropType type, bagel::ent_type sourceBrick={-1}, float gradeValue=0.0f):&#160;EntityFactory.h']]],
+  ['spawnexamprojectile_8',['spawnExamProjectile',['../exam_8cpp.html#a160a4a0f4b2bfc84e3c09fdd7f73a05f',1,'exam.cpp']]],
+  ['spawngamestate_9',['spawnGameState',['../_entity_factory_8cpp.html#a009bd957a7108ec54e3126efee614200',1,'spawnGameState():&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#a24cb166d0c4386227537be3fc41250d8',1,'spawnGameState():&#160;EntityFactory.cpp']]],
+  ['spawngradchair_10',['spawnGradChair',['../_entity_factory_8cpp.html#aae5530014172f89c414bbc5d8533027e',1,'spawnGradChair(int index, float x, float y):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#adee6c669ccff7a1020ae961454a13872',1,'spawnGradChair(int index, float x, float y):&#160;EntityFactory.cpp']]],
+  ['spawngradobstacle_11',['spawnGradObstacle',['../_entity_factory_8cpp.html#a7513afd79b59821a174f03d3f91f2093',1,'spawnGradObstacle(float x, int rowGap, float dir):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#a03693d795502c9adc6ee687600fd06ba',1,'spawnGradObstacle(float x, int rowGap, float dir):&#160;EntityFactory.cpp']]],
+  ['spawnpaddle_12',['spawnPaddle',['../_entity_factory_8cpp.html#a1622fc4eb7f54421d75be548cb3be6db',1,'spawnPaddle(float x, float y):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#ac91109873cfdaf37376b8a8e17e2db00',1,'spawnPaddle(float x, float y):&#160;EntityFactory.cpp']]],
+  ['spawnprojectile_13',['spawnProjectile',['../_entity_factory_8cpp.html#a106bdcb68ceea15b9e9a00eed2e30165',1,'spawnProjectile(int courseId, float x, float y, float vx, float vy):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#a9ad76fde697974dfcaac6a796ea8a511',1,'spawnProjectile(int courseId, float x, float y, float vx, float vy):&#160;EntityFactory.cpp']]],
+  ['spawnslotx_14',['spawnSlotX',['../exam_8cpp.html#ac5ab3dbfdfd6b8ea1b1f0f6a0f8ae335',1,'exam.cpp']]],
+  ['spawnstageonescene_15',['spawnStageOneScene',['../_game_restart_8cpp.html#a218bccb9afc109a1e779ad8eed80272f',1,'GameRestart.cpp']]],
+  ['spawnwall_16',['spawnWall',['../_entity_factory_8cpp.html#a84e053b940b176e1796cc687b379afec',1,'spawnWall(float x, float y, float w, float h):&#160;EntityFactory.cpp'],['../_entity_factory_8h.html#a67bd9e87efe7ff7ff9e5f4e919a73f5f',1,'spawnWall(float x, float y, float w, float h):&#160;EntityFactory.cpp']]],
+  ['spritedest_17',['spriteDest',['../render_8cpp.html#a0e93d35f8fe8dd21e270ec93e794991c',1,'render.cpp']]],
+  ['startexam_18',['startExam',['../exam_8cpp.html#a948e952e36370264014ad3dcc125b3ac',1,'exam.cpp']]],
+  ['startstageone_19',['startStageOne',['../_game_8cpp.html#a86f65bde973a29b15a945f0708bb14be',1,'Game.cpp']]],
+  ['startstagetwo_20',['startStageTwo',['../_game_8cpp.html#a6b19c9e6658c9fd1c804d1ffde521987',1,'Game.cpp']]],
+  ['syncpositionsfrombodies_21',['syncPositionsFromBodies',['../_physics_8cpp.html#a2aa31658a908601fecaf56160b734a51',1,'Physics.cpp']]]
+];
