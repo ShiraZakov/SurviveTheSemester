@@ -1,4 +1,6 @@
-// hud.cpp — heads-up display and on-field prompts.
+/// @file hud.cpp
+/// @brief Heads-up display and on-field prompts: lives pips, year badge, timer bar,
+///        average grade, exam status, pause button/banner, and year-transition overlay.
 // Graphical only (sprites + SDL_RenderDebugText, no SDL_ttf): lives pips, the year badge
 // and timer bar, academic month, average, exam status, the pause button/banner, and the
 // year-transition overlay. Also owns the pause-button hit-test helpers used by Game.cpp.
@@ -34,6 +36,8 @@ static void drawCurrentAcademicMonth(SDL_Renderer* r, float centerX, float y, in
     SDL_SetRenderScale(r, 1.0f, 1.0f);
 }
 
+/// @brief Draws the year-transition overlay (semi-transparent background + year label)
+///        while yearAnnounceTimer > 0.
 static void drawYearAnnouncement(SDL_Renderer* r, float yearAnnounceTimer, int currentYear) {
     if (yearAnnounceTimer <= 0.0f) return;
 
@@ -79,6 +83,7 @@ static void drawYearAnnouncement(SDL_Renderer* r, float yearAnnounceTimer, int c
     SDL_SetRenderScale(r, 1.0f, 1.0f);
 }
 
+/// @brief Returns the pixel rectangle used for the pause/resume button.
 static SDL_FRect pauseButtonRect() {
     return {16.0f, 50.0f, 96.0f, 34.0f};
 }
@@ -102,6 +107,7 @@ bool hudPauseButtonHit(float px, float py) {
     return px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h;
 }
 
+/// @brief Draws the pause button labeled "Pause" or "Resume" depending on current pause state.
 static void drawPauseButton(SDL_Renderer* r, bool paused) {
     const SDL_FRect b = pauseButtonRect();
     const char* label = paused ? "Resume" : "Pause";
@@ -125,6 +131,7 @@ static void drawPauseButton(SDL_Renderer* r, bool paused) {
     SDL_SetRenderScale(r, 1.0f, 1.0f);
 }
 
+/// @brief Draws a "PAUSED" banner in the center-top of the screen while the game is paused.
 static void drawPausedBanner(SDL_Renderer* r) {
     const float W = static_cast<float>(Config::WINDOW_W);
     const char* title = "PAUSED";

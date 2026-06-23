@@ -1,4 +1,6 @@
-// year.cpp — the academic-year clock.
+/// @file year.cpp
+/// @brief Academic-year clock: accumulates play time, advances the year when the per-year
+///        timer fills, and handles year-5 expiry (yearsExhausted in stage 1, instant loss in stage 2).
 // Accumulates play time (totalTime, the score) and per-year time. When a year's timer
 // fills it advances to the next year and shows the year-transition overlay. Running out
 // of years in stage 1 sets yearsExhausted (a lose condition checked by gameStateSystem);

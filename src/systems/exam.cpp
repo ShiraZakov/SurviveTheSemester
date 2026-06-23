@@ -1,4 +1,6 @@
-// exam.cpp — the exam phase.
+/// @file exam.cpp
+/// @brief The exam phase: ExamStarted transitions to Phase::EXAM, a timer runs while
+///        projectiles are fired at the paddle, and ExamFinished is emitted on timeout.
 // An ExamStarted event puts the game into Phase::EXAM: a timer runs while projectiles
 // are fired at the paddle from three columns; the player dodges. When the timer ends the
 // grade is computed from how many hits were taken (100 - 12*hits, floored at 55) and an

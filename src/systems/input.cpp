@@ -1,4 +1,6 @@
-// input.cpp — stage-1 paddle control.
+/// @file input.cpp
+/// @brief Stage-1 paddle control: kinematic paddle follows the mouse (clamped to the field)
+///        and the ball is parked on top of the paddle until the player serves.
 // Moves the kinematic paddle to follow the mouse (clamped to the field) and, before
 // launch, parks a stationary ball on top of the paddle so it rides along until served.
 

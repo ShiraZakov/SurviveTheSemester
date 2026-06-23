@@ -1,4 +1,7 @@
-// render.cpp — draws the scene.
+/// @file render.cpp
+/// @brief Scene renderer: iterates all Position+Size+Drawable entities and draws them
+///        via spritesheet crops (SpritePart) with a colored-rect/circle fallback.
+///        Brick meters, the tax drop, and the graduation backdrop are special-cased.
 // Walks every entity with Position+Size+Drawable and draws it: prefers the spritesheet
 // crop (SpritePart), falling back to a colored rect/circle when textures aren't loaded.
 // Bricks also get their progress meter; the Tax drop and graduation backdrop are special-
@@ -16,6 +19,8 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Computes the pixel destination rectangle for a sprite, preserving its aspect ratio
+///        and handling the paddle's bottom-aligned anchor specially.
 static SDL_FRect spriteDest(Entity e, float worldX, float drawY, float worldW, float worldH,
                             const SpritePart& sp) {
     const float boxW = worldW * Config::PPM;
@@ -39,6 +44,7 @@ static SDL_FRect spriteDest(Entity e, float worldX, float drawY, float worldW, f
     return {cx - drawW * 0.5f, top, drawW, drawH};
 }
 
+/// @brief Draws a filled circle using horizontal scanlines (fallback when textures are unavailable).
 static void fillCircle(SDL_Renderer* r, float cx, float cy, float rad) {
     for (int dy = -(int)rad; dy <= (int)rad; ++dy) {
         float dx = SDL_sqrtf(rad * rad - (float)dy * (float)dy);
@@ -47,6 +53,7 @@ static void fillCircle(SDL_Renderer* r, float cx, float cy, float rad) {
     }
 }
 
+/// @brief Draws the tax drop as a gold square with a glow halo and a dark crosshair mark.
 static void drawTaxDrop(SDL_Renderer* r, float cx, float cy, float half) {
     const float outer = half * 1.12f;
     SDL_FRect glow{cx - outer, cy - outer, outer * 2.0f, outer * 2.0f};
@@ -71,6 +78,8 @@ static void drawTaxDrop(SDL_Renderer* r, float cx, float cy, float half) {
     SDL_RenderFillRect(r, &bar);
 }
 
+/// @brief Draws a single entity using its SpritePart (if textures are ready) or its
+///        Drawable fallback shape; also draws the brick progress meter overlay.
 static void drawEntity(SDL_Renderer* r, Entity e) {
     if (e.has<GradChairTag>() && e.has<GradChairInfo>()) {
         if (e.get<GradChairInfo>().hidden) return;

@@ -1,7 +1,6 @@
 #pragma once
-// Shared input helpers at the SDL boundary.
-// Keeps the "global mouse -> window-relative -> world meters" conversion in one
-// place (used by inputSystem and the graduation input handlers).
+/// @file Input.h
+/// @brief Shared input helpers at the SDL boundary — global mouse to world-meter conversion.
 
 #include "Config.h"
 #include <SDL3/SDL.h>

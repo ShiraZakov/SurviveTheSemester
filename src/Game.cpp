@@ -1,4 +1,5 @@
-// Game.cpp — application shell and system scheduler.
+/// @file Game.cpp
+/// @brief Application shell and system scheduler.
 //
 // SurviveGame owns three things: the per-frame system call order (tick), all the
 // full-screen UI (menu / level-select / how-to-play guide / pause banner / win-lose
@@ -31,6 +32,7 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Finds the Course aggregate entity for track @p id; returns {-1} if not found.
 bagel::ent_type courseEntity(int id) {
     static const Mask mask = MaskBuilder().set<Course>().build();
     static int q = World::createQuery(mask);
@@ -61,6 +63,7 @@ void eventCleanupSystem() {
     }
 }
 
+/// @brief Destroys all entities and shuts down the Box2D world (used by shutdown).
 static void clearAll() {
     destroyAllEntities();
     phys::shutdown();
@@ -116,6 +119,7 @@ void SurviveGame::shutdown() {
     sprites::shutdown();
 }
 
+/// @brief Gives the parked ball an initial velocity and marks the game as started.
 static void launchBallAndStart() {
     GameState& gs = gameState();
     static const Mask mask = MaskBuilder().set<BallTag>().build();
@@ -129,12 +133,14 @@ static void launchBallAndStart() {
     }
 }
 
+/// @brief Transitions to Phase::PLAYING with the ball waiting to be served.
 static void startStageOne() {
     GameState& gs = gameState();
     gs.phase = Phase::PLAYING;
     gs.started = false;
 }
 
+/// @brief Transitions directly to Phase::GRADUATION and enters the graduation stage.
 static void startStageTwo() {
     GameState& gs = gameState();
     gs.phase = Phase::GRADUATION;
@@ -147,17 +153,21 @@ struct UiButton {
     const char* label;
 };
 
+/// @brief Builds a horizontally-centered UiButton at the given Y pixel position.
 static UiButton centeredButton(float y, const char* label) {
     constexpr float w = 320.0f;
     constexpr float h = 58.0f;
     return {{(Config::WINDOW_W - w) * 0.5f, y, w, h}, label};
 }
 
+/// @brief Returns true if the pixel point (x, y) lies inside the button rectangle.
 static bool inside(const UiButton& b, float x, float y) {
     return x >= b.rect.x && x <= b.rect.x + b.rect.w
         && y >= b.rect.y && y <= b.rect.y + b.rect.h;
 }
 
+/// @brief Renders debug text centered horizontally at pixel Y position @p y.
+/// @param scale Render scale factor applied to the debug font
 static void drawCenteredText(SDL_Renderer* r, const char* text, float y, float scale,
                              float red, float green, float blue) {
     const float textW = SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * scale
@@ -171,6 +181,7 @@ static void drawCenteredText(SDL_Renderer* r, const char* text, float y, float s
     SDL_SetRenderScale(r, 1.0f, 1.0f);
 }
 
+/// @brief Renders a filled dark-blue button with a border and centered white label.
 static void drawButton(SDL_Renderer* r, const UiButton& b) {
     SDL_SetRenderDrawColorFloat(r, 0.10f, 0.18f, 0.35f, 0.94f);
     SDL_RenderFillRect(r, &b.rect);
@@ -189,6 +200,7 @@ static void drawButton(SDL_Renderer* r, const UiButton& b) {
     SDL_SetRenderScale(r, 1.0f, 1.0f);
 }
 
+/// @brief Draws a semi-transparent full-screen dark overlay behind menu/guide/end screens.
 static void drawOverlayPanel(SDL_Renderer* r) {
     SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColorFloat(r, 0.02f, 0.03f, 0.06f, 0.86f);
@@ -271,6 +283,7 @@ static constexpr float kGuideViewportBottom = 750.0f;
 static constexpr float kGuideViewportLeft   = 110.0f;
 static constexpr float kGuideViewportRight  = static_cast<float>(Config::WINDOW_W) - 130.0f;
 
+/// @brief Returns the pixel height allocated for one guide entry of the given kind.
 static float guideEntryHeight(GuideKind kind) {
     switch (kind) {
         case Section: return 64.0f;
@@ -281,17 +294,20 @@ static float guideEntryHeight(GuideKind kind) {
     return 34.0f;
 }
 
+/// @brief Returns the total scrollable height of the guide content in pixels.
 static float guideContentHeight() {
     float total = 0.0f;
     for (const auto& e : kGuideEntries) total += guideEntryHeight(e.kind);
     return total;
 }
 
+/// @brief Returns the maximum scroll offset (pixels) so the last guide entry stays in view.
 static float guideMaxScroll() {
     const float viewportH = kGuideViewportBottom - kGuideViewportTop;
     return std::max(0.0f, guideContentHeight() - viewportH);
 }
 
+/// @brief Renders one guide entry at pixel Y position @p y with the style appropriate for its kind.
 static void drawGuideEntry(SDL_Renderer* r, const GuideEntry& e, float y) {
     if (e.kind == Blank) return;
     float scale, rr, gg, bb;
@@ -319,6 +335,7 @@ static void drawGuideEntry(SDL_Renderer* r, const GuideEntry& e, float y) {
     }
 }
 
+/// @brief Draws a vertical scrollbar for the guide panel when the content overflows the viewport.
 static void drawGuideScrollbar(SDL_Renderer* r, float scroll, float maxScroll) {
     if (maxScroll <= 0.0f) return;
     const float viewportH = kGuideViewportBottom - kGuideViewportTop;
@@ -339,6 +356,7 @@ static void drawGuideScrollbar(SDL_Renderer* r, float scroll, float maxScroll) {
     SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_NONE);
 }
 
+/// @brief Draws the full How-to-Play guide overlay with the given scroll offset.
 static void drawGuide(SDL_Renderer* r, float scroll) {
     drawOverlayPanel(r);
     drawCenteredText(r, "How to Play", 55.0f, 3.0f, 1.0f, 0.95f, 0.35f);
@@ -364,6 +382,7 @@ static void drawGuide(SDL_Renderer* r, float scroll) {
     drawButton(r, centeredButton(800.0f, "Back"));
 }
 
+/// @brief Draws the Choose-Level overlay with Stage 1 and Stage 2 buttons.
 static void drawLevelSelect(SDL_Renderer* r) {
     drawOverlayPanel(r);
     drawCenteredText(r, "Choose Starting Level", 105.0f, 3.0f, 1.0f, 0.95f, 0.35f);
@@ -373,6 +392,7 @@ static void drawLevelSelect(SDL_Renderer* r) {
     drawButton(r, centeredButton(510.0f, "Back"));
 }
 
+/// @brief Draws the main menu overlay (or guide / level-select sub-screen based on flags).
 static void drawMenu(SDL_Renderer* r, bool showGuide, bool showLevelSelect, float guideScroll) {
     if (showGuide) {
         drawGuide(r, guideScroll);
@@ -391,6 +411,7 @@ static void drawMenu(SDL_Renderer* r, bool showGuide, bool showLevelSelect, floa
     drawButton(r, centeredButton(490.0f, "Choose Level"));
 }
 
+/// @brief Returns the Y pixel position for the Play-Again button on the end screen.
 static float endScreenPlayAgainY(LoseReason loseReason) {
     switch (loseReason) {
     case LoseReason::Stage1AvgTooLow: return 380.0f;
@@ -398,6 +419,7 @@ static float endScreenPlayAgainY(LoseReason loseReason) {
     }
 }
 
+/// @brief Returns the Y pixel position for the Exit button on the end screen.
 static float endScreenExitY(LoseReason loseReason) {
     switch (loseReason) {
     case LoseReason::Stage1AvgTooLow: return 460.0f;
@@ -405,6 +427,7 @@ static float endScreenExitY(LoseReason loseReason) {
     }
 }
 
+/// @brief Draws the WON or LOST end screen with the result message and Play-Again / Exit buttons.
 static void drawEndScreen(SDL_Renderer* r, Phase phase, float average, LoseReason loseReason) {
     drawOverlayPanel(r);
     if (phase == Phase::WON) {

@@ -1,4 +1,7 @@
-// drops.cpp — cleanup of fallen drops.
+/// @file drops.cpp
+/// @brief Cleanup of fallen drops. Catching is handled by the physics sensor (DropCaught);
+///        this system only removes drops that exit the bottom uncaught, emitting TaxMissed
+///        for missed tax drops.
 // Catching a drop is handled by the physics sensor (-> DropCaught). This system only
 // removes drops that fall off the bottom uncaught; a missed Tax drop emits TaxMissed
 // (an average penalty) on its way out.
