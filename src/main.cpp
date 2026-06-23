@@ -1,3 +1,6 @@
+/// @file main.cpp
+/// @brief Application entry point. Initializes SDL3, creates the window and renderer,
+///        runs the fixed-timestep game loop, and tears everything down on exit.
 #define SDL_MAIN_HANDLED
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>

@@ -1,4 +1,6 @@
-// endgame.cpp — folds gameplay events into GameState and resolves win/lose.
+/// @file endgame.cpp
+/// @brief Folds gameplay events (LifeLost, DropCaught, TaxMissed, ExamFinished) into
+///        GameState and resolves win/lose conditions each frame.
 // Reads LifeLost / DropCaught(Tax) / TaxMissed / ExamFinished events into lives, average,
 // and coursesDone, then checks end conditions in priority order: out of lives > all bricks
 // cleared (win, or stage-1 avg-too-low) > years exhausted > all exams done but avg < pass.
@@ -15,6 +17,7 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Returns true when every BrickTag entity is tagged Dead (all bricks cleared).
 static bool allBricksCleared() {
     static const Mask mask = MaskBuilder().set<BrickTag>().build();
     static int q = World::createQuery(mask);

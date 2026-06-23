@@ -1,5 +1,7 @@
 #pragma once
-// Spritesheet rects from Book1.xlsx — breakout-assignment3 style (part on entity + SDL_RenderTexture).
+/// @file Sprites.h
+/// @brief Spritesheet catalog, texture management, and draw helpers for all in-game art.
+///        Sprite rects are defined in sprites::Id enum values and looked up at draw time.
 
 #include "Components.h"
 #include "Enums.h"
@@ -8,8 +10,10 @@
 namespace sprites {
 
 constexpr int PREREQ_NONE = -1;
-constexpr int PREREQ_ALL_COURSES = -2;   // final project: all other courses cleared
+/// @brief Sentinel for the final-project prereq: requires ALL other courses to be cleared first.
+constexpr int PREREQ_ALL_COURSES = -2;
 
+/// @brief Enumeration of every sprite identifier used in the game.
 enum class Id {
     COURSE_INTRO_CS,
     COURSE_C_PROGRAMMING,
@@ -80,31 +84,69 @@ enum class Id {
     COUNT
 };
 
-void initCatalog(); // sprite rects only (no textures) — for tests
+/// @brief Initializes sprite rect catalog without loading textures (for unit tests).
+void initCatalog();
+
+/// @brief Loads all spritesheet textures and initializes the sprite catalog.
+/// @param renderer SDL renderer used for IMG_LoadTexture calls
+/// @return True on success; false if any texture file failed to load
 bool init(SDL_Renderer* renderer);
+
+/// @brief Destroys all loaded textures and clears the atlas table.
 void shutdown();
+
+/// @brief Returns true when all atlas textures have been successfully loaded.
 bool ready();
 
+/// @brief Constructs a SpritePart (crop rect + atlas index) for the given sprite ID.
 SpritePart makePart(Id id);
 
+/// @brief Maps a spritesheet index (0..20) to the corresponding catalog course index.
 int courseIndexFromSprite(int spriteIndex);
+
+/// @brief Returns true if the given catalog course has a dedicated locked-state sprite.
 bool courseUsesLockedArt(int courseIndex);
+
+/// @brief Returns the single prerequisite catalog course index for the given course,
+///        or PREREQ_NONE / PREREQ_ALL_COURSES for courses with special prerequisites.
 int coursePrereq(int courseIndex);
+
+/// @brief Returns a bitmask where bit i is set if catalog course i must be cleared first.
 uint32_t coursePrereqMask(int courseIndex);
+
+/// @brief Returns the number of hits required to fill the brick meter for this course.
 int courseMeterMax(int courseIndex);
+
+/// @brief Returns the sprite Id to use for a course brick in its current lock state.
+/// @param locked True to return the locked-art variant
 Id courseSpriteId(int courseIndex, bool locked);
+
+/// @brief Returns the year-label sprite Id (YEAR_FIRST…YEAR_FIFTH) for the given 1-based year.
 Id yearSpriteId(int year);
 
 constexpr int COURSE_COUNT = 21;
+/// @brief Catalog index of the final-project brick (requires all others cleared first).
 constexpr int FINAL_COURSE_INDEX = COURSE_COUNT - 1;
 
+/// @brief Returns true if the course starts the game already unlocked (no prerequisites).
 bool courseStartsUnlocked(int courseIndex);
+
+/// @brief Returns true if the brick should display its locked sprite given the current unlock state.
 bool courseShowsLockedSprite(int courseIndex, bool unlocked);
 
+/// @brief Renders a pre-cropped SpritePart to the given destination rectangle.
 void drawPart(SDL_Renderer* r, const SpritePart& sp, const SDL_FRect& dest);
+
+/// @brief Renders a named sprite Id scaled to the given destination rectangle.
 void draw(SDL_Renderer* r, Id id, float dstX, float dstY, float dstW, float dstH);
+
+/// @brief Draws the graduation stage backdrop spanning the full window width.
 void drawGraduationStage(SDL_Renderer* r);
+
+/// @brief Draws a 3-segment brick meter at the given position using the correct fill sprite.
 void drawMeter3(SDL_Renderer* r, int filled, int maxFilled, float x, float y, float w, float h);
+
+/// @brief Draws a 5-segment brick meter at the given position using the correct fill sprite.
 void drawMeter5(SDL_Renderer* r, int filled, int maxFilled, float x, float y, float w, float h);
 
 } // namespace sprites

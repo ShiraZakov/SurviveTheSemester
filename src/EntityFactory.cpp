@@ -1,4 +1,6 @@
-// EntityFactory.cpp — builds every entity together with its Box2D body and components.
+/// @file EntityFactory.cpp
+/// @brief Implements all entity spawn functions: creates Box2D bodies with the correct
+///        type and shape flags, attaches ECS components, and returns the new entity.
 //
 // Body conventions (set by the b2BodyType passed to makeBody):
 //   paddle      = kinematic (moved by input, not by forces)
@@ -20,6 +22,7 @@
 using bagel::Entity;
 using bagel::ent_type;
 
+/// @brief Creates a Box2D body of the given type at (x, y) with the entity ID encoded in userData.
 static b2BodyId makeBody(ent_type e, b2BodyType type, float x, float y) {
     b2BodyDef bd = b2DefaultBodyDef();
     bd.type = type;
@@ -28,6 +31,10 @@ static b2BodyId makeBody(ent_type e, b2BodyType type, float x, float y) {
     return b2CreateBody(phys::world(), &bd);
 }
 
+/// @brief Attaches a box shape to a Box2D body with the given event flags.
+/// @param sensor    True to make the shape a sensor (no collision response)
+/// @param contactEv True to enable contact begin/end events for solid shapes
+/// @param sensorEv  True to enable sensor overlap begin/end events
 static void addBox(b2BodyId body, float w, float h, bool sensor, bool contactEv, bool sensorEv) {
     b2ShapeDef sd = b2DefaultShapeDef();
     sd.density = 1.0f;
@@ -40,6 +47,7 @@ static void addBox(b2BodyId body, float w, float h, bool sensor, bool contactEv,
     b2CreatePolygonShape(body, &sd, &box);
 }
 
+/// @brief Attaches a circle shape to a Box2D body with the given event flags.
 static void addCircle(b2BodyId body, float radius, bool sensor, bool contactEv, bool sensorEv) {
     b2ShapeDef sd = b2DefaultShapeDef();
     sd.density = 1.0f;

@@ -1,3 +1,7 @@
+/// @file GameRestart.cpp
+/// @brief Scene reset and Play-Again restart logic.
+///        Provides destroyAllEntities (wipe the world), setupFreshPlayScene (spawn Stage 1),
+///        and playAgainRestart (full teardown + respawn).
 #include "Game.h"
 #include "EntityFactory.h"
 #include "Physics.h"
@@ -6,6 +10,7 @@
 using bagel::Entity;
 using bagel::ent_type;
 
+/// @brief Iterates every live entity in the world and destroys it.
 void destroyAllEntities() {
     bagel::Bag<ent_type, 256> all;
     for (Entity e = Entity::first(); !e.eof(); e.next())
@@ -14,6 +19,8 @@ void destroyAllEntities() {
         Entity(all[i]).destroy();
 }
 
+/// @brief Spawns the four boundary walls, three Course aggregates, the 7×3 brick grid,
+///        the paddle, and the ball for a fresh Stage-1 play session.
 static void spawnStageOneScene() {
     const float W = Config::WORLD_W, H = Config::WORLD_H, t = Config::WALL;
     spawnWall(W * 0.5f, t * 0.5f,     W, t);
@@ -41,11 +48,14 @@ static void spawnStageOneScene() {
         - Config::BALL_RADIUS + 0.3f);
 }
 
+/// @brief Binds a new GameState singleton and spawns a complete Stage-1 scene.
 void setupFreshPlayScene() {
     bindGameState(spawnGameState().entity());
     spawnStageOneScene();
 }
 
+/// @brief Full Play-Again restart: destroys every entity, reinitializes the Box2D world,
+///        and spawns a fresh Stage-1 scene.
 void playAgainRestart() {
     destroyAllEntities();
     phys::shutdown();

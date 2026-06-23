@@ -1,4 +1,5 @@
-// Physics.cpp — the only file that touches Box2D directly.
+/// @file Physics.cpp
+/// @brief The only file that touches Box2D directly.
 //
 // Two jobs:
 //   1. A thin phys:: API (init/shutdown, get/set velocity, set position, destroy body)
@@ -29,12 +30,14 @@ using bagel::World;
 
 static b2WorldId g_world = b2_nullWorldId;
 
+/// @brief Creates the Box2D world with zero gravity.
 void phys::init() {
     b2WorldDef wd = b2DefaultWorldDef();
     wd.gravity = {0.0f, 0.0f};
     g_world = b2CreateWorld(&wd);
 }
 
+/// @brief Destroys the Box2D world and invalidates all body handles.
 void phys::shutdown() {
     if (B2_IS_NON_NULL(g_world)) {
         b2DestroyWorld(g_world);
@@ -42,13 +45,16 @@ void phys::shutdown() {
     }
 }
 
+/// @brief Returns the Box2D world handle; intended for EntityFactory use only.
 b2WorldId phys::world() { return g_world; }
 
+/// @brief Decodes the body's userData back to the ECS entity ID that owns it.
 ent_type phys::entityOf(b2BodyId b) {
     int v = static_cast<int>(reinterpret_cast<intptr_t>(b2Body_GetUserData(b)));
     return { v - 1 };   // userData stores id+1; 0 -> {-1} (no entity)
 }
 
+/// @brief Sets the linear velocity of the Box2D body attached to entity @p e.
 void phys::setVelocity(ent_type e, float vx, float vy) {
     Entity en{e};
     if (!en.has<PhysicsBody>()) return;
@@ -57,6 +63,7 @@ void phys::setVelocity(ent_type e, float vx, float vy) {
     b2Body_SetLinearVelocity(body, {vx, vy});
 }
 
+/// @brief Reads the linear velocity of the Box2D body attached to entity @p e into (vx, vy).
 void phys::getVelocity(ent_type e, float& vx, float& vy) {
     vx = vy = 0.0f;
     Entity en{e};
@@ -67,6 +74,7 @@ void phys::getVelocity(ent_type e, float& vx, float& vy) {
     vx = v.x; vy = v.y;
 }
 
+/// @brief Teleports the Box2D body attached to entity @p e to world position (x, y).
 void phys::setPosition(ent_type e, float x, float y) {
     Entity en{e};
     if (!en.has<PhysicsBody>()) return;
@@ -164,6 +172,7 @@ void physicsStepSystem(float dt) {
     regulateBallSpeed();
 }
 
+/// @brief Handles a solid ball-brick or ball-paddle contact begin event and emits the correct ECS event.
 static void onContactPair(ent_type a, ent_type b) {
     if (a.id < 0 || b.id < 0) return;
     Entity ea{a}, eb{b};
@@ -183,6 +192,7 @@ static void onContactPair(ent_type a, ent_type b) {
         ev::paddleHit(ball.entity(), other.entity());
 }
 
+/// @brief Handles a sensor overlap begin event (projectile-paddle or drop-paddle) and emits the correct ECS event.
 static void onSensorPair(ent_type sensor, ent_type visitor) {
     if (sensor.id < 0 || visitor.id < 0) return;
     Entity s{sensor}, v{visitor};

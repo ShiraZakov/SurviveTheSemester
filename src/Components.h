@@ -1,20 +1,18 @@
 #pragma once
-// All ECS component + tag structs, plus the GameState singleton.
-//
-// Three kinds of thing live here:
-//   - Data components : POD structs attached to entities (Position, Course, ...).
-//   - GameState       : one large struct on a single "singleton" entity holding all
-//                       cross-system status (lives, phase, timers, stage-2 state).
-//   - Tags            : empty structs used only for has<>() filtering (BallTag, ...).
-//
-// Two meanings of "course" — easy to confuse, so worth stating up front:
-//   - courseId    (0..COURSES-1, i.e. 0..2): a colored row/track of bricks. Each track
-//                 has one Course component whose progress drives ONE exam (coursesTotal == 3).
-//   - courseIndex (0..20): which of the 21 real catalog courses a brick represents —
-//                 selects its sprite, prerequisites, meter size, and tax slot.
-// A brick carries both (see BrickInfo). The 7x3 grid = 3 tracks x 7 catalog courses.
-//
-// Storage tiers (Tagged / Packed / Sparse) are customized at the bottom of this file.
+/// @file Components.h
+/// @brief All ECS component and tag structs, plus the GameState singleton.
+///
+/// Three kinds of thing live here:
+///   - Data components: POD structs attached to entities (Position, Course, …).
+///   - GameState: one large struct on a single "singleton" entity holding all
+///                cross-system status (lives, phase, timers, stage-2 state).
+///   - Tags: empty structs used only for has<>() filtering (BallTag, …).
+///
+/// Two meanings of "course" — easy to confuse:
+///   - courseId    (0..COURSES-1 = 0..2): a colored row/track of bricks.
+///   - courseIndex (0..20): which of the 21 catalog courses a brick represents.
+///
+/// Storage tiers (Tagged / Packed / Sparse) are customized at the bottom of this file.
 
 #include "bagel.h"
 #include "Enums.h"
@@ -26,22 +24,37 @@
 // Hot per-frame components (Position, PhysicsBody, Drawable, Course) get
 // PackedStorage at the bottom of this file; the rest use BAGEL's default
 // SparseStorage.
-struct Position        { float x, y; };                                            // center point in world meters
-struct Size            { float w, h; };                                            // full width & height, used for drawing and physics
-struct Drawable        { float r, g, b, a; Shape shape; };                         // render color (0..1) + which shape to draw
-struct SpritePart      { SDL_FRect part; int sheet; };                             // spritesheet crop + texture index (breakout style)
-struct PhysicsBody     { b2BodyId body; };                                         // handle to this entity's Box2D body
 
-struct Course          { int id; CourseState state; float progress; };             // a course: its number, current state, progress 0..1
-struct BrickInfo       { int courseId; int courseIndex; };                         // courseId = colored track 0..2; courseIndex = catalog course 0..20
-struct BrickProgress   { int filled; int max; bool unlocked; float clearDelay; };  // meter + prereq; clearDelay > 0 = full meter pause before destroy
-struct BrickPrereqMask { uint32_t mustClear; };                                    // bit i set => course index i must be cleared first
+/// @brief Center position of an entity in world meters (Box2D coordinate space).
+struct Position        { float x, y; };
+/// @brief Full width and height of an entity; used for drawing and physics shape creation.
+struct Size            { float w, h; };
+/// @brief Render color (0..1 RGBA) and primitive shape used by the fallback renderer.
+struct Drawable        { float r, g, b, a; Shape shape; };
+/// @brief A crop rectangle into a spritesheet texture plus the atlas index.
+struct SpritePart      { SDL_FRect part; int sheet; };
+/// @brief Handle to this entity's Box2D rigid body.
+struct PhysicsBody     { b2BodyId body; };
+
+/// @brief Per-course aggregate: track ID, lifecycle state, and 0..1 completion progress.
+struct Course          { int id; CourseState state; float progress; };
+/// @brief Identifies which colored track (courseId 0..2) and catalog course (courseIndex 0..20) a brick belongs to.
+struct BrickInfo       { int courseId; int courseIndex; };
+/// @brief Brick meter state: how many hits filled, maximum needed, whether prereqs are met, and clear-delay countdown.
+struct BrickProgress   { int filled; int max; bool unlocked; float clearDelay; };
+/// @brief Bitmask of catalog-course indices that must be cleared before this brick unlocks.
+struct BrickPrereqMask { uint32_t mustClear; };
+/// @brief Data carried by a falling drop: its course, catalog index, type, the brick it came from, and a grade value.
 struct DropInfo        { int courseId; int courseIndex; DropType type;
                         bagel::ent_type sourceBrick; float gradeValue; };
-struct ProjInfo        { int courseId; };                                          // exam projectile -> course that fired it
-struct PaddleImpact    { float time; };                                            // remaining visual bounce time after ball contact
+/// @brief Identifies which course fired an exam projectile, used for hit attribution.
+struct ProjInfo        { int courseId; };
+/// @brief Remaining seconds of the visual bounce animation after the ball hits the paddle.
+struct PaddleImpact    { float time; };
 
-// on the singleton entity only
+/// @brief Singleton component (one entity only) holding all cross-system runtime state:
+///        lives, average grade, game phase, academic year/timer, exam state, graduation
+///        progress, input cache, and cheat flags.
 struct GameState {
     int   lives;
     float average;
@@ -87,19 +100,32 @@ struct GameState {
 };
 
 // ---- Tags (empty; checked via has<>(), never get<>()) ----
+/// @brief Marks the paddle entity.
 struct PaddleTag    {};
+/// @brief Marks the ball entity.
 struct BallTag      {};
+/// @brief Marks a course brick entity.
 struct BrickTag     {};
+/// @brief Marks a boundary wall entity.
 struct WallTag      {};
+/// @brief Marks a falling drop (assignment, bonus, or tax) entity.
 struct DropTag      {};
+/// @brief Marks an exam projectile entity.
 struct ProjectileTag{};
+/// @brief Marks a graduation ceremony chair entity.
 struct GradChairTag {};
+/// @brief Marks the graduation student entity (repurposed paddle in stage 2).
 struct GradStudentTag {};
+/// @brief Marks a sliding graduation obstacle entity.
 struct GradObstacleTag {};
+/// @brief Marks the singleton GameState entity.
 struct GameStateTag {};
-struct DeadTag      {};   // marks entity for deletion by deadCleanupSystem
+/// @brief Marks any entity for deletion by deadCleanupSystem at end of frame.
+struct DeadTag      {};
 
+/// @brief Per-chair data: grid index and whether the chair is hidden during a vault animation.
 struct GradChairInfo { int index; bool hidden; };
+/// @brief Per-obstacle data: which row-gap it occupies, current travel direction, and foul-contact flag.
 struct GradObstacleInfo { int rowGap; float dir; bool contactFouled; };
 
 // ---- Storage customization ----

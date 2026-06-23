@@ -1,4 +1,6 @@
-// progress.cpp — course-track progress and exam triggering.
+/// @file progress.cpp
+/// @brief Course-track progress accumulation and exam triggering.
+///        Consuming BrickCleared events advances a track's progress and, at 100%, emits ExamStarted.
 // Each cleared brick (BrickCleared) bumps its colored track's Course.progress; when a
 // track reaches 100% it flips ACTIVE -> DONE and emits ExamStarted. Note this works on
 // courseId (the 0..2 track), not the 0..20 catalog index — see Components.h.

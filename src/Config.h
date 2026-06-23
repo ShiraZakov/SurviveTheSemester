@@ -1,7 +1,7 @@
 #pragma once
-// Shared tunables
-// World units are METERS (Box2D native). Pixels only appear at the SDL boundary
-// (render + input), via PPM. Position is the CENTER of an entity.
+/// @file Config.h
+/// @brief Shared game constants and layout helpers.
+///        World units are meters (Box2D native); pixels appear only at the SDL boundary via PPM.
 
 namespace Config {
     // Window / world
@@ -31,14 +31,17 @@ namespace Config {
     constexpr int   COURSES      = 3;
     constexpr float DROP_SIZE    = 0.55f;
 
+    /// @brief Returns the Y center of the paddle in world meters (just above the floor wall).
     inline float paddleY() {
         return WORLD_H - WALL - 0.45f - PADDLE_H * 0.5f;
     }
 
+    /// @brief Returns the total pixel-width of the 7-column brick grid including gaps.
     inline float brickGridWidth() {
         return BRICK_COLS * BRICK_W + (BRICK_COLS - 1) * BRICK_GAP;
     }
 
+    /// @brief Converts a grid (row, col) position to a flat catalog course index.
     inline int gridCourseIndex(int row, int col) {
         return row * BRICK_COLS + col;
     }
@@ -54,7 +57,8 @@ namespace Config {
     constexpr float TAX_DROP_SIZE = 0.72f;   // tax marker drawn larger than assignment drops
     constexpr int   CATALOG_COURSES = 21;
 
-    // Academic credits (נ"ז) per catalog course — weights the GPA average.
+    /// @brief Returns the academic credit weight (נ"ז) for the given catalog course index.
+    ///        Used to weight the GPA average.
     inline int courseCredits(int courseIndex) {
         static constexpr int credits[CATALOG_COURSES] = {
             4, 4, 5, 5, 4, 4, 3,   // intro .. mathematical thinking
@@ -70,6 +74,7 @@ namespace Config {
     constexpr int   ACADEMIC_MONTHS = 10;  // Oct..Jul
     constexpr float MONTH_SECONDS = YEAR_SECONDS / static_cast<float>(ACADEMIC_MONTHS);
 
+    /// @brief Returns the 0-based academic month index (0=Oct … 9=Jul) from elapsed year time.
     inline int academicMonthIndex(float yearTimer) {
         int month = static_cast<int>(yearTimer / MONTH_SECONDS);
         if (month < 0) return 0;
@@ -77,6 +82,7 @@ namespace Config {
         return month;
     }
 
+    /// @brief Returns the abbreviated name of the given academic month index (0=Oct … 9=Jul).
     inline const char* academicMonthShort(int month) {
         static constexpr const char* names[ACADEMIC_MONTHS] = {
             "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
@@ -85,7 +91,7 @@ namespace Config {
         return names[month];
     }
 
-    // Catalog-index buckets per academic year (grid layout stays unchanged).
+    /// @brief Returns the first catalog-course index belonging to the given 1-based academic year.
     inline int yearCourseStart(int year) {
         static constexpr int sizes[YEAR_COUNT] = {4, 4, 4, 4, 5};
         int start = 0;
@@ -93,11 +99,13 @@ namespace Config {
         return start;
     }
 
+    /// @brief Returns the number of catalog courses belonging to the given 1-based academic year.
     inline int yearCourseCount(int year) {
         static constexpr int sizes[YEAR_COUNT] = {4, 4, 4, 4, 5};
         return sizes[year - 1];
     }
 
+    /// @brief Returns true if the given catalog course belongs to the given academic year.
     inline bool courseInYear(int year, int courseIndex) {
         const int start = yearCourseStart(year);
         return courseIndex >= start && courseIndex < start + yearCourseCount(year);
@@ -131,42 +139,51 @@ namespace Config {
     constexpr float GRAD_OBSTACLE_H       = 0.48f;
     constexpr float GRAD_OBSTACLE_SPEED   = 3.2f;
 
+    /// @brief Returns the Y world-coordinate of the bottom edge of the graduation stage backdrop.
     inline float graduationStageBottomY() {
         return (static_cast<float>(WINDOW_W) * GRAD_BG_ASPECT) / PPM;
     }
 
+    /// @brief Returns the Y world-coordinate of the student's starting position (bottom of screen).
     inline float graduationStudentStartY() {
         return WORLD_H - WALL - GRAD_STUDENT_H * 0.5f - 0.45f;
     }
 
+    /// @brief Returns the Y world-coordinate of the top of the chair grid zone.
     inline float graduationChairZoneTopY() {
         return graduationStageBottomY() + GRAD_CHAIR_STAGE_GAP + GRAD_CHAIR_H * 0.5f;
     }
 
+    /// @brief Returns the Y world-coordinate of the bottom of the chair grid zone.
     inline float graduationChairZoneBottomY() {
         return graduationStudentStartY()
             - GRAD_STUDENT_H - GRAD_STUDENT_GAP
             - GRAD_CHAIR_H * 0.5f - 0.20f;
     }
 
+    /// @brief Returns the vertical distance between adjacent chair rows in world meters.
     inline float graduationRowStep() {
         if (GRAD_CHAIR_ROWS <= 1) return 0.0f;
         return (graduationChairZoneBottomY() - graduationChairZoneTopY())
             / static_cast<float>(GRAD_CHAIR_ROWS - 1);
     }
 
+    /// @brief Returns the total number of chairs in the graduation grid (rows × cols).
     inline int graduationChairTotal() {
         return GRAD_CHAIR_ROWS * GRAD_CHAIR_COLS;
     }
 
+    /// @brief Returns the number of chair rows the student must cross to reach the stage.
     inline int graduationPathRows() {
         return GRAD_CHAIR_ROWS;
     }
 
+    /// @brief Returns the grid index of the center chair in the given row (the default landing target).
     inline int graduationPathChairIndex(int row) {
         return row * GRAD_CHAIR_COLS + GRAD_CHAIR_COLS / 2;
     }
 
+    /// @brief Computes the world-space center position (x, y) of the chair at the given grid index.
     inline void graduationChairPos(int index, float& x, float& y) {
         const int row = index / GRAD_CHAIR_COLS;
         const int col = index % GRAD_CHAIR_COLS;
@@ -177,6 +194,7 @@ namespace Config {
         y = graduationChairZoneBottomY() - row * graduationRowStep();
     }
 
+    /// @brief Returns the X world-coordinates of the left and right edges of the chair grid.
     inline void graduationChairRowSpan(float& leftEdge, float& rightEdge) {
         float x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f;
         graduationChairPos(0, x0, y0);
@@ -185,6 +203,8 @@ namespace Config {
         rightEdge = x1 + GRAD_CHAIR_W * 0.5f;
     }
 
+    /// @brief Clamps the student's X position so it stays within the horizontal chair-row bounds.
+    /// @param halfW Half of the student sprite width
     inline float clampGradStudentX(float x, float halfW) {
         float left = 0.0f, right = 0.0f;
         graduationChairRowSpan(left, right);
@@ -195,6 +215,7 @@ namespace Config {
         return x;
     }
 
+    /// @brief Returns the Y world-coordinate of the center of the gap between the given adjacent chair rows.
     inline float graduationObstacleY(int rowGap) {
         float x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f;
         graduationChairPos(rowGap * GRAD_CHAIR_COLS, x0, y0);
@@ -202,10 +223,12 @@ namespace Config {
         return (y0 + y1) * 0.5f;
     }
 
+    /// @brief Returns the number of row-gap slots that can contain an obstacle.
     inline int graduationObstacleRowGapCount() {
         return GRAD_CHAIR_ROWS > 1 ? GRAD_CHAIR_ROWS - 1 : 1;
     }
 
+    /// @brief Returns the grid index of the chair in the given row closest to worldX.
     inline int graduationNearestChairInRow(int row, float worldX) {
         int best = graduationPathChairIndex(row);
         float bestDist = 1e9f;
@@ -222,7 +245,7 @@ namespace Config {
         return best;
     }
 
-    // Course color (graphical identity). Writes rgb in 0..1.
+    /// @brief Writes the display color (r, g, b in 0..1) for the given course track ID.
     inline void courseColor(int id, float& r, float& g, float& b) {
         switch (((id % COURSES) + COURSES) % COURSES) {
             case 0:  r = 0.90f; g = 0.32f; b = 0.32f; break; // red

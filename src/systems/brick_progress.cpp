@@ -1,4 +1,7 @@
-// brick_progress.cpp — per-brick meter, unlocking, and clearing.
+/// @file brick_progress.cpp
+/// @brief Per-brick meter advancement, prerequisite unlocking, and brick clearing.
+///        Implements brickMeterSystem, brickUnlockSystem, brickClearDelaySystem, and
+///        the brickIsPlayable / brickPrereqsMet helpers used by other systems.
 //
 // Each brick has a small segment meter (BrickProgress). Ball hits and caught Assignment
 // drops advance it; when full, the brick waits a brief clearDelay then is destroyed,
@@ -36,10 +39,9 @@ bool brickPrereqsMet(Entity brick) {
     return true;
 }
 
-// Decide whether a brick draws its locked sprite, given an already-computed
-// prereq result. Only the final-project brick depends on prereqsMet; every other
-// course keys off its own unlock flag. Callers that already know prereqsMet
-// (brickUnlockSystem) reuse it here instead of re-running the full prereq scan.
+/// @brief Returns whether a brick should draw its locked sprite given a pre-computed prereq result.
+///        Callers in brickUnlockSystem pass the prereqsMet they already computed to avoid
+///        re-running the expensive full-world scan.
 static bool brickLockedForSprite(int ci, const BrickProgress& prog, bool prereqsMet) {
     if (ci == sprites::FINAL_COURSE_INDEX)
         return !prereqsMet;
@@ -82,10 +84,12 @@ bool brickIsPlayable(Entity brick) {
     return brickPrereqsMet(brick);
 }
 
+/// @brief Updates the brick's SpritePart to the correct locked/unlocked art for its course.
 static void applyBrickSprite(Entity brick, int courseIndex, bool locked) {
     brick.get<SpritePart>() = sprites::makePart(sprites::courseSpriteId(courseIndex, locked));
 }
 
+/// @brief Emits BrickCleared, spawns the Tax drop, removes the Box2D body, and tags the brick Dead.
 static void clearBrick(Entity brick) {
     const auto& info = brick.get<BrickInfo>();
     const auto& pos  = brick.get<Position>();
@@ -95,6 +99,8 @@ static void clearBrick(Entity brick) {
     brick.add(DeadTag{});
 }
 
+/// @brief Increments the brick's fill counter if the brick is playable and not yet full;
+///        sets clearDelay and removes the physics body when the meter completes.
 static void tryAdvanceBrick(Entity brick) {
     if (!brick.has<BrickProgress>() || !brick.has<BrickInfo>() || !brick.has<Position>()) return;
     if (!brickIsPlayable(brick)) return;

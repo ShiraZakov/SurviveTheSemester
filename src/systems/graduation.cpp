@@ -1,4 +1,6 @@
-// graduation.cpp — Stage 2 "graduation ceremony".
+/// @file graduation.cpp
+/// @brief Stage-2 graduation ceremony: the student navigates rows of chairs toward the
+///        stage by jumping (left-click) while avoiding sliding red obstacles.
 //
 // The stage-1 paddle entity is repurposed as the student (GradStudentTag). The player
 // slides left/right with the mouse and left-clicks to vault forward one chair row;
@@ -35,6 +37,7 @@ using bagel::ent_type;
 
 namespace {
 
+/// @brief Tags every entity with component Tag as Dead so deadCleanupSystem removes them.
 template<typename Tag>
 static void markTagDead() {
     static const Mask mask = MaskBuilder().set<Tag>().build();
@@ -44,6 +47,7 @@ static void markTagDead() {
         e.add(DeadTag{});
 }
 
+/// @brief Finds the single GradStudentTag entity; writes it to @p out and returns true, or false if none.
 static bool gradStudent(Entity& out) {
     for (Entity e = Entity::first(); !e.eof(); e.next()) {
         if (e.mask().ctz() < 0) continue;
@@ -273,6 +277,8 @@ static void endGraduationLost(GameState& gs) {
     gs.started = false;
 }
 
+/// @brief Handles a graduation foul: deducts a life, checks for game-over, and sets
+///        gradAwaitingSpace to pause gameplay until the player retries.
 static void onGraduationFoul() {
     GameState& gs = gameState();
     if (gs.gradAwaitingSpace) return;
@@ -291,6 +297,8 @@ static void onGraduationFoul() {
     resetGraduationProgress();
 }
 
+/// @brief Resets the student to the bottom of the chair grid, unhides all chairs, and
+///        clears animation state so the player can retry from row 0.
 static void resetGraduationProgress() {
     GameState& gs = gameState();
 
@@ -304,6 +312,9 @@ static void resetGraduationProgress() {
         Config::WORLD_W * 0.5f, Config::GRAD_STUDENT_W * 0.5f);
 }
 
+/// @brief Moves the student along with any obstacle that is pushing them; triggers a foul
+///        if the student is carried off the row edge.
+/// @param dt Fixed timestep in seconds
 static void applyObstacleDrag(float dt) {
     GameState& gs = gameState();
     gs.gradBeingDragged = false;
@@ -367,6 +378,8 @@ static void applyObstacleDrag(float dt) {
     resolveStudentAgainstObstacles(sy, sw, sh, gs.gradNextChair);
 }
 
+/// @brief Moves each obstacle left/right at GRAD_OBSTACLE_SPEED and reverses direction at the row edges.
+/// @param dt Fixed timestep in seconds
 static void updateObstacles(float dt) {
     float left = 0.0f, right = 0.0f;
     Config::graduationChairRowSpan(left, right);
@@ -390,6 +403,7 @@ static void updateObstacles(float dt) {
     });
 }
 
+/// @brief Hides the target chair during a vault animation so it doesn't overlap the student sprite.
 static void syncChairVisibility() {
     GameState& gs = gameState();
     const int hideChair = (gs.gradAnimStep == 1) ? gs.gradActiveChair : -1;
@@ -401,6 +415,7 @@ static void syncChairVisibility() {
     }
 }
 
+/// @brief Returns true when the student entity's top edge has crossed above the stage backdrop.
 static bool studentTouchesStage() {
     Entity student{ent_type{-1}};
     if (!gradStudent(student)) return false;
@@ -414,12 +429,16 @@ static bool studentTouchesStage() {
     return p.x + halfW > 0.0f && p.x - halfW < Config::WORLD_W;
 }
 
+/// @brief Transitions the game to Phase::WON when the student reaches the stage.
 static void finishGraduation() {
     GameState& gs = gameState();
     gs.phase = Phase::WON;
     gs.started = false;
 }
 
+/// @brief Updates the student entity's Position, Size, and SpritePart based on the
+///        current animation state (idle, vaulting, landing). Returns true if the student
+///        has touched the stage (win condition).
 static bool syncStudentVisual() {
     GameState& gs = gameState();
     Entity student{ent_type{-1}};
@@ -480,12 +499,15 @@ static bool syncStudentVisual() {
     return studentTouchesStage();
 }
 
+/// @brief Applies chair visibility and student visual for the current frame; calls finishGraduation
+///        if the student has reached the stage.
 static void commitGraduationFrame() {
     syncChairVisibility();
     if (syncStudentVisual())
         finishGraduation();
 }
 
+/// @brief Sets yearsExhausted and transitions the game to LOST when called during graduation.
 static void onGraduationYear5Expired() {
     GameState& gs = gameState();
     if (gs.phase != Phase::GRADUATION) return;
@@ -596,9 +618,10 @@ void graduationOnSpace() {
     commitGraduationFrame();
 }
 
-// Per-frame driver: moves obstacles, applies any push/drag to the student, redraws the
-// student, and advances the vault->land animation, bumping gradNextChair when a landing
-// completes. Reaching the stage (inside commitGraduationFrame) flips the phase to WON.
+/// @brief Per-frame driver for Stage 2: moves obstacles, applies push/drag to the student,
+///        redraws the student, and advances the vault→land animation. Reaching the stage
+///        (inside commitGraduationFrame) flips the phase to WON.
+/// @param dt Fixed timestep in seconds
 void graduationSystem(float dt) {
     GameState& gs = gameState();
     if (gs.phase != Phase::GRADUATION) return;

@@ -1,3 +1,6 @@
+/// @file Sprites.cpp
+/// @brief Implements the sprite catalog (pixel rects from spreadsheet data), texture loading,
+///        course-metadata lookups (prereqs, meter sizes, locked art), and draw helpers.
 #include "Sprites.h"
 #include "Components.h"
 #include "Config.h"
@@ -20,10 +23,13 @@ struct Entry { Atlas atlas; Rect rect; };
 static SDL_Texture* g_textures[static_cast<int>(Atlas::COUNT)]{};
 static std::array<Entry, static_cast<size_t>(Id::COUNT)> g_entries{};
 
+/// @brief Records the pixel crop rect for sprite @p id from the given atlas texture.
+/// @param x1,y1 Top-left corner in texture pixels; x2,y2 bottom-right corner
 static void set(Id id, Atlas atlas, float x1, float y1, float x2, float y2) {
     g_entries[static_cast<size_t>(id)] = {atlas, {x1, y1, x2 - x1, y2 - y1}};
 }
 
+/// @brief Populates the g_entries table with pixel rect data for every sprite Id.
 static void defineSprites() {
     set(Id::COURSE_INTRO_CS, Atlas::Courses, 26, 71, 238, 350);
     set(Id::COURSE_C_PROGRAMMING, Atlas::Courses, 238, 66, 454, 350);
@@ -182,11 +188,13 @@ static_assert(sizeof(kPrereq) / sizeof(kPrereq[0]) == COURSE_COUNT, "kPrereq siz
 static_assert(sizeof(kMeterMax) / sizeof(kMeterMax[0]) == COURSE_COUNT, "kMeterMax size mismatch");
 static_assert(sizeof(kUsesLocked) / sizeof(kUsesLocked[0]) == COURSE_COUNT, "kUsesLocked size mismatch");
 
+/// @brief Returns the sprite Id for a course brick given its index and lock state.
 static Id pickCourseSprite(int courseIndex, bool locked) {
     const int idx = ((courseIndex % kCourseCount) + kCourseCount) % kCourseCount;
     return locked ? kLockedBricks[idx] : kCourseBricks[idx];
 }
 
+/// @brief Selects the correct 3-segment meter sprite for the current fill level.
 static Id meter3Id(int filled, int maxFilled) {
     if (filled <= 0) return Id::METER3_EMPTY;
     if (filled >= maxFilled) return Id::METER3_3_3;
@@ -194,6 +202,7 @@ static Id meter3Id(int filled, int maxFilled) {
     return Id::METER3_2_3;
 }
 
+/// @brief Selects the correct 5-segment meter sprite for the current fill level.
 static Id meter5Id(int filled, int maxFilled) {
     if (filled <= 0) return Id::METER5_EMPTY;
     const int step = (filled * 5 + maxFilled - 1) / maxFilled;
@@ -206,6 +215,8 @@ static Id meter5Id(int filled, int maxFilled) {
     }
 }
 
+/// @brief Loads a texture from res/assets/<file> into the atlas slot at @p atlasIndex.
+/// @return True on success; false if the file could not be found or loaded
 static bool loadTexture(SDL_Renderer* renderer, const char* file, int atlasIndex) {
     const std::string rel = std::string("res/assets/") + file;
     g_textures[atlasIndex] = IMG_LoadTexture(renderer, rel.c_str());

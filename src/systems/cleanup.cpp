@@ -1,4 +1,7 @@
-// cleanup.cpp — end-of-frame entity reaping.
+/// @file cleanup.cpp
+/// @brief End-of-frame entity reaping.
+///        Systems tag entities DeadTag instead of deleting mid-frame; deadCleanupSystem
+///        destroys their Box2D bodies and ECS entities once, after all systems have run.
 // Systems never delete entities mid-frame (that would mutate queries other systems are
 // still walking); they tag them DeadTag instead. This runs last each frame to destroy
 // those bodies and entities once, after every system has seen them.

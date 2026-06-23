@@ -1,4 +1,6 @@
-// ball_paddle.cpp — ball/paddle interaction.
+/// @file ball_paddle.cpp
+/// @brief Ball/paddle interaction: bounce angle computation on PaddleHit events and
+///        ball-loss detection that resets the ball and emits LifeLost.
 // On a PaddleHit event, computes the bounce angle from where the ball struck the paddle
 // (plus a little spin from paddle motion) so the player can aim. Separately detects when
 // the ball falls past the floor: emits LifeLost and re-parks the ball for the next serve.
@@ -15,6 +17,7 @@ using bagel::Mask;
 using bagel::MaskBuilder;
 using bagel::World;
 
+/// @brief Re-parks the ball on top of the paddle (zero velocity) after a life is lost.
 static void resetBall(Entity ball) {
     static const Mask paddleMask = MaskBuilder()
         .set<PaddleTag>()
@@ -32,6 +35,7 @@ static void resetBall(Entity ball) {
     ball.get<Position>() = {x, y};
 }
 
+/// @brief Checks each ball's Y position; emits LifeLost and resets the ball when it falls below the floor.
 static void ballLossSystem() {
     static const Mask mask = MaskBuilder()
         .set<BallTag>()
@@ -55,6 +59,8 @@ static inline float clampf(float v, float lo, float hi) {
     return v;
 }
 
+/// @brief Consumes PaddleHit events and computes a new ball velocity with offset-based
+///        angle steering and a small paddle-spin contribution.
 static void paddleHitSystem() {
     static const Mask mask = MaskBuilder().set<PaddleHit>().build();
     static int q = World::createQuery(mask);
