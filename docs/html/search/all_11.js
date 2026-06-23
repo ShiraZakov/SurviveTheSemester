@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['tax_0',['Tax',['../_enums_8h.html#abecf6b8067adf6fffefd25e8fa4b886ba4b78ac8eb158840e9638a3aeb26c4a9d',1,'Enums.h']]],
+  ['tax_5fcaught_1',['TAX_CAUGHT',['../struct_game_state.html#a58964aff91defca5f007c177c979ecc2',1,'GameState']]],
+  ['tax_5fdrop_5fsize_2',['TAX_DROP_SIZE',['../namespace_config.html#a33832c1599d3b45a4790697d6f67cc41',1,'Config']]],
+  ['tax_5fmiss_5fpenalty_3',['TAX_MISS_PENALTY',['../namespace_config.html#a0966c20f982cbeff3bf6ef44f1167518',1,'Config']]],
+  ['tax_5fmissed_4',['TAX_MISSED',['../struct_game_state.html#a4811bdad7de42b748fde812b4a10242d',1,'GameState']]],
+  ['tax_5fpending_5',['TAX_PENDING',['../struct_game_state.html#a2f49b4639a7841d31a5f6d4754ddd47c',1,'GameState']]],
+  ['taxmissed_6',['TaxMissed',['../struct_tax_missed.html',1,'']]],
+  ['taxmissed_7',['taxMissed',['../namespaceev.html#a311e34bb40c3ae6453b2f7e8ac7bb223',1,'ev']]],
+  ['taxoutcome_8',['taxOutcome',['../struct_game_state.html#a3c794acb4b6cabeeb7c3bf3cda56e393',1,'GameState']]],
+  ['text_9',['text',['../struct_guide_entry.html#a4a6f1ab15cd4fd04ea777fa13f47fd0d',1,'GuideEntry']]],
+  ['the_20code_10',['Two meanings of &quot;course&quot; (read this before the code)',['../index.html#autotoc_md9',1,'']]],
+  ['the_20semester_11',['Survive the Semester',['../index.html',1,'']]],
+  ['this_20before_20the_20code_12',['Two meanings of &quot;course&quot; (read this before the code)',['../index.html#autotoc_md9',1,'']]],
+  ['tick_13',['tick',['../class_survive_game.html#ae06c0ce7f8b848461c264ea2321e0596',1,'SurviveGame']]],
+  ['time_14',['time',['../struct_paddle_impact.html#af4b96b8ce2a9366f11fff595145d8a6f',1,'PaddleImpact']]],
+  ['toggleslowballcheat_15',['ToggleSlowBallCheat',['../struct_toggle_slow_ball_cheat.html',1,'']]],
+  ['toggleslowballcheat_16',['toggleSlowBallCheat',['../namespaceev.html#a08f178a98fed459ceaa9c2f4c865ee98',1,'ev']]],
+  ['totaltime_17',['totalTime',['../struct_game_state.html#a9e292e35b25cadae74bcfd88077a15e6',1,'GameState']]],
+  ['tryadvancebrick_18',['tryAdvanceBrick',['../brick__progress_8cpp.html#ac1911050c95643b9e63bc3b084136151',1,'brick_progress.cpp']]],
+  ['two_20meanings_20of_20course_20read_20this_20before_20the_20code_19',['Two meanings of &quot;course&quot; (read this before the code)',['../index.html#autotoc_md9',1,'']]],
+  ['type_20',['type',['../structbagel_1_1_storage_3_01_paddle_tag_01_4.html#ae3834f7439de70c4c65f4699ce01d5b8',1,'bagel::Storage&lt; PaddleTag &gt;::type'],['../structbagel_1_1_storage_3_01_ball_tag_01_4.html#ab224a0ffc2567c7b971ba1d61ad8342e',1,'bagel::Storage&lt; BallTag &gt;::type'],['../structbagel_1_1_storage_3_01_brick_tag_01_4.html#afbc4a93cd995db316c340ec9da7c0df9',1,'bagel::Storage&lt; BrickTag &gt;::type'],['../structbagel_1_1_storage_3_01_wall_tag_01_4.html#a69a4e6bc9a51eda0782ebeae1830d820',1,'bagel::Storage&lt; WallTag &gt;::type'],['../structbagel_1_1_storage_3_01_drop_tag_01_4.html#a22f1357596fb01bea5ce109896c5f9d7',1,'bagel::Storage&lt; DropTag &gt;::type'],['../structbagel_1_1_storage_3_01_projectile_tag_01_4.html#a3274e6d6c4c7e2c21a0832e77622e7bf',1,'bagel::Storage&lt; ProjectileTag &gt;::type'],['../structbagel_1_1_storage_3_01_grad_chair_tag_01_4.html#a73a4c0065048c906e55d62a73519a571',1,'bagel::Storage&lt; GradChairTag &gt;::type'],['../structbagel_1_1_storage_3_01_grad_student_tag_01_4.html#ace8158f3cb501be65c84a5998313c5d8',1,'bagel::Storage&lt; GradStudentTag &gt;::type'],['../structbagel_1_1_storage_3_01_grad_obstacle_tag_01_4.html#adf7ad2f51c96e2facf0a8338d621a9cb',1,'bagel::Storage&lt; GradObstacleTag &gt;::type'],['../structbagel_1_1_storage_3_01_game_state_tag_01_4.html#a61be7cd5d24f5ea0f878ef34a03ae29b',1,'bagel::Storage&lt; GameStateTag &gt;::type'],['../structbagel_1_1_storage_3_01_dead_tag_01_4.html#a189ab0b70a18a645384313042b56c7a8',1,'bagel::Storage&lt; DeadTag &gt;::type'],['../structbagel_1_1_storage_3_01_position_01_4.html#a228171f21cf495c59d43229ba6871f94',1,'bagel::Storage&lt; Position &gt;::type'],['../structbagel_1_1_storage_3_01_physics_body_01_4.html#ab2454414042a312fbb63cc1ccabf943c',1,'bagel::Storage&lt; PhysicsBody &gt;::type'],['../structbagel_1_1_storage_3_01_drawable_01_4.html#a60006411ee26bf2f1a5817ddb30c249a',1,'bagel::Storage&lt; Drawable &gt;::type'],['../structbagel_1_1_storage_3_01_sprite_part_01_4.html#aa17b6ef246e19de3e26f8fd8cf2e452d',1,'bagel::Storage&lt; SpritePart &gt;::type'],['../structbagel_1_1_storage_3_01_brick_progress_01_4.html#ac52196e9cd7ec4c495297ef54ca14f91',1,'bagel::Storage&lt; BrickProgress &gt;::type'],['../structbagel_1_1_storage_3_01_course_01_4.html#aaff43af743002755ba635c7e3f57518d',1,'bagel::Storage&lt; Course &gt;::type'],['../structbagel_1_1_storage_3_01_event_tag_01_4.html#a405af6d187583c189739c7344890e6fc',1,'bagel::Storage&lt; EventTag &gt;::type'],['../struct_drop_info.html#ae30576c370fb2ce10bb9cf9b881af8a9',1,'DropInfo::type'],['../struct_drop_caught.html#aa1d2fa0f7c441b20bde3b3d1b6fa7624',1,'DropCaught::type']]]
+];
